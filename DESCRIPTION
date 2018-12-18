@@ -5,9 +5,11 @@ Version: 0.1
 Date: 2018-12-18
 Author: Emil Sjoerup
 Maintainer: Emil Sjoerup <emilsjoerup@live.dk>
-Description: Calculates the T-statistic for the drift burst hypothesis from the working paper Christensen, Oomen and Ren<c3><b2> (2018) <DOI:10.2139/ssrn.2842535>. The code is an R/RcppArmadillo version of the authors' MATLAB code, which is available at >><<<<>>><<<>>>><< Get link plz.
+Description: Calculates the T-statistic for the drift burst hypothesis from the working paper Christensen, Oomen and Reno (2018) <DOI:10.2139/ssrn.2842535>. The code is an R/RcppArmadillo version of the authors' MATLAB code, which is available upon request, see: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2842535 .
 License: GPL-3
+BugReports: https://github.com/emilsjoerup/DriftBurstHypothesis/issues
+URL: https://github.com/emilsjoerup/DriftBurstHypothesis
 Imports: Rcpp (>= 0.12.18)
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
-Packaged: 2018-12-18 12:27:30 UTC; emils
+Packaged: 2018-12-18 14:23:33 UTC; emils
