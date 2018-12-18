@@ -1,0 +1,4 @@
+useDynLib(DriftBurstHypothesis, .registration=TRUE)
+importFrom("Rcpp", "evalCpp")
+importFrom("stats" , "filter")
+export(drift_bursts)

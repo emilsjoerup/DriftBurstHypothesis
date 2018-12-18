@@ -1,0 +1,13 @@
+Package: DriftBurstHypothesis
+Type: Package
+Title: Calculates Test-statistic for the Drift Burst Hypothesis
+Version: 0.1
+Date: 2018-12-18
+Author: Emil Sjoerup
+Maintainer: Emil Sjoerup <emilsjoerup@live.dk>
+Description: Calculates the T-statistic for the drift burst hypothesis from the working paper Christensen, Oomen and Ren<c3><b2> (2018) <DOI:10.2139/ssrn.2842535>. The code is an R/RcppArmadillo version of the authors' MATLAB code, which is available at >><<<<>>><<<>>>><< Get link plz.
+License: GPL-3
+Imports: Rcpp (>= 0.12.18)
+LinkingTo: Rcpp, RcppArmadillo
+NeedsCompilation: yes
+Packaged: 2018-12-18 12:27:30 UTC; emils
