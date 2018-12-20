@@ -35,7 +35,7 @@ An \code{integer} denoting the bandwidth for the exponential kernel for the mean
 An \code{integer} denoting the bandwidth for the exponential kernel for the variance.
 }
   \item{bParallelize}{
-A \code{Boolean} to determine whether to parallelize the underlying C++ code. Beware that paralellization will utilize ALL available cores - Please use with care on shared computational resources.
+A \code{Boolean} to determine whether to parallelize the underlying C++ code. 
 }
 \item{iCores}{
 An \code{integer} denoting the number of cores to use for calculating the code when paralellized.
@@ -58,34 +58,35 @@ Emil Sjoerup
 
 \examples{
 \dontrun{
-#Simulate from a stochastic volatility model 
-#A flash crash and flash rally are coded into the function
+#Simulate from a stochastic volatility model.
+#Both a flash crash and flash rally are coded into the function.
 StochasticVolatilitySim = function(iT, dSigma, dPhi, dMu){
   vSim = numeric(iT)
   vEps = rnorm(iT , sd =dSigma)
-  
+  vEpsy = rnorm(iT)
   vEps[60001:62000] = rnorm(2000 ,sd =seq(from = dSigma , 
-                                          to = 2*dSigma , length.out = 2000)) 
+                            to = 2*dSigma , length.out = 2000)) 
   vEps[62001:64000] = rnorm(2000 ,sd =seq(from = 2*dSigma , 
-                                          to = dSigma , length.out = 2000))
+                            to = dSigma , length.out = 2000))
+  vEpsy[60001:62000] = -rnorm(2000 ,mean =seq(from = 0,
+                              to = 0.2 , length.out = 2000)) 
+  vEpsy[62001:64000] = -rnorm(2000 ,mean =seq(from = 0.2,
+                              to = 0 , length.out = 2000))
+  
   
   vEps[160001:163000] = rnorm(3000,sd = seq(from = dSigma , 
-                                            to = 2*dSigma , length.out = 3000))
+                              to = 2*dSigma , length.out = 3000))
   vEps[163001:166000] = rnorm(3000,  sd = seq(from = 2*dSigma , 
-                                              to =  dSigma, length.out = 3000))
+                              to =  dSigma, length.out = 3000))
   
-  vEpsy = rnorm(iT)
-  vSim[1] = dMu + dPhi *rnorm(1 , mean = dMu , sd = dSigma /sqrt(1-dPhi^2))
-  vEpsy[60001:62000] = -rnorm(2000 ,mean =seq(from = 0,
-                                              to = 0.2 , length.out = 2000)) 
-  vEpsy[62001:64000] = -rnorm(2000 ,mean =seq(from = 0.2,
-                                              to = 0 , length.out = 2000))
+  
+  
   
   vEpsy[160001:163000] = rnorm(3000 ,mean =seq(from = 0,
-                                               to = 0.2 , length.out = 3000))
+                               to = 0.2 , length.out = 3000))
   vEpsy[163001:166000] = rnorm(3000 ,mean =seq(from = 0.2,
-                                               to = 0 , length.out = 3000))
-  
+                               to = 0 , length.out = 3000))
+  vSim[1] = dMu + dPhi *rnorm(1 , mean = dMu , sd = dSigma /sqrt(1-dPhi^2))
   for (i in 2:iT) {
     vSim[i] = dMu + dPhi * (vSim[(i-1)] - dMu) + vEps[i]
   }
@@ -100,13 +101,16 @@ vY = 500+cumsum(StochasticVolatilitySim(iT, dSigma, dPhi, dMu))
 #insert an outlier:
 vY[100000] = 500
 plot.ts(vY)
-
+#Here, the observations are equidistant, but the code can handle 
+#unevenly spaced observations.
 testtimestamps = seq(34200 , 57600 , length.out = iT)
 
 
-dbtest = drift_bursts(testtimestamps ,  log(vY) , 
-                      testtimes = seq(34200 , 57600 , 60),
+DBHtStat = drift_bursts(testtimestamps ,  log(vY) , 
+                      testtimes = seq(34200 , 57600 , 60),PreAverage = 5, AcLag = -1L,
+                      Mean_bandwidth = 300L, Variance_bandwidth = 900L, 
                       bParallelize = FALSE)
-plot.ts(dbtest$DriftBursts)
+plot.ts(DBHtStat$DriftBursts)
+
 }
 }

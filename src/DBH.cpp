@@ -121,7 +121,8 @@ Rcpp::List DriftBurstLoopC(arma::vec vPreAveraged, arma::vec diffedlogprices, ar
       
       
       double dAsympVar = AsymptoticVarianceC((vWvar.elem(vIdx) % vPreAveraged.elem(vIdx)),vAcLag[i]) / iVarBandwidth; 
-      // currently this function sometimes(rarely) fails, thus a check is incorporated to prevent R from crashing
+      // currently this function sometimes(rarely) fails, 
+      // thus a check is incorporated to prevent R from crashing
       
       if(dAsympVar == -1.0){
         dReturnINF = 1;
