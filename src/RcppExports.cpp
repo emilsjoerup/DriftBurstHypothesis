@@ -17,18 +17,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// AutomaticLagSelectionC
-int AutomaticLagSelectionC(arma::vec vX, double dMu);
-RcppExport SEXP _DriftBurstHypothesis_AutomaticLagSelectionC(SEXP vXSEXP, SEXP dMuSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type vX(vXSEXP);
-    Rcpp::traits::input_parameter< double >::type dMu(dMuSEXP);
-    rcpp_result_gen = Rcpp::wrap(AutomaticLagSelectionC(vX, dMu));
-    return rcpp_result_gen;
-END_RCPP
-}
 // AsymptoticVarianceC
 double AsymptoticVarianceC(arma::vec vIn, int iLag);
 RcppExport SEXP _DriftBurstHypothesis_AsymptoticVarianceC(SEXP vInSEXP, SEXP iLagSEXP) {
@@ -41,8 +29,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// AutomaticLagSelectionC
+int AutomaticLagSelectionC(arma::vec vX, double dMu);
+RcppExport SEXP _DriftBurstHypothesis_AutomaticLagSelectionC(SEXP vXSEXP, SEXP dMuSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type vX(vXSEXP);
+    Rcpp::traits::input_parameter< double >::type dMu(dMuSEXP);
+    rcpp_result_gen = Rcpp::wrap(AutomaticLagSelectionC(vX, dMu));
+    return rcpp_result_gen;
+END_RCPP
+}
 // DriftBurstLoopC
-Rcpp::List DriftBurstLoopC(arma::vec vPreAveraged, arma::vec diffedlogprices, arma::vec vTime, arma::vec vTesttime, int iMeanBandwidth, int iVarBandwidth, int iPreAverage, int iAcLag);
+Rcpp::List DriftBurstLoopC(arma::vec vPreAveraged, arma::vec diffedlogprices, arma::vec vTime, arma::vec vTesttime, double iMeanBandwidth, double iVarBandwidth, int iPreAverage, int iAcLag);
 RcppExport SEXP _DriftBurstHypothesis_DriftBurstLoopC(SEXP vPreAveragedSEXP, SEXP diffedlogpricesSEXP, SEXP vTimeSEXP, SEXP vTesttimeSEXP, SEXP iMeanBandwidthSEXP, SEXP iVarBandwidthSEXP, SEXP iPreAverageSEXP, SEXP iAcLagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -51,8 +51,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type diffedlogprices(diffedlogpricesSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type vTime(vTimeSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type vTesttime(vTesttimeSEXP);
-    Rcpp::traits::input_parameter< int >::type iMeanBandwidth(iMeanBandwidthSEXP);
-    Rcpp::traits::input_parameter< int >::type iVarBandwidth(iVarBandwidthSEXP);
+    Rcpp::traits::input_parameter< double >::type iMeanBandwidth(iMeanBandwidthSEXP);
+    Rcpp::traits::input_parameter< double >::type iVarBandwidth(iVarBandwidthSEXP);
     Rcpp::traits::input_parameter< int >::type iPreAverage(iPreAverageSEXP);
     Rcpp::traits::input_parameter< int >::type iAcLag(iAcLagSEXP);
     rcpp_result_gen = Rcpp::wrap(DriftBurstLoopC(vPreAveraged, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag));
@@ -60,7 +60,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // DriftBurstLoopCPAR
-Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices, arma::vec vTime, arma::vec vTesttime, int iMeanBandwidth, int iVarBandwidth, int iPreAverage, int iAcLag, int iCores);
+Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices, arma::vec vTime, arma::vec vTesttime, double iMeanBandwidth, double iVarBandwidth, int iPreAverage, int iAcLag, int iCores);
 RcppExport SEXP _DriftBurstHypothesis_DriftBurstLoopCPAR(SEXP vPreAveragedSEXP, SEXP diffedlogpricesSEXP, SEXP vTimeSEXP, SEXP vTesttimeSEXP, SEXP iMeanBandwidthSEXP, SEXP iVarBandwidthSEXP, SEXP iPreAverageSEXP, SEXP iAcLagSEXP, SEXP iCoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -69,8 +69,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type diffedlogprices(diffedlogpricesSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type vTime(vTimeSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type vTesttime(vTesttimeSEXP);
-    Rcpp::traits::input_parameter< int >::type iMeanBandwidth(iMeanBandwidthSEXP);
-    Rcpp::traits::input_parameter< int >::type iVarBandwidth(iVarBandwidthSEXP);
+    Rcpp::traits::input_parameter< double >::type iMeanBandwidth(iMeanBandwidthSEXP);
+    Rcpp::traits::input_parameter< double >::type iVarBandwidth(iVarBandwidthSEXP);
     Rcpp::traits::input_parameter< int >::type iPreAverage(iPreAverageSEXP);
     Rcpp::traits::input_parameter< int >::type iAcLag(iAcLagSEXP);
     Rcpp::traits::input_parameter< int >::type iCores(iCoresSEXP);
@@ -81,8 +81,8 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_DriftBurstHypothesis_HACWeightC", (DL_FUNC) &_DriftBurstHypothesis_HACWeightC, 1},
-    {"_DriftBurstHypothesis_AutomaticLagSelectionC", (DL_FUNC) &_DriftBurstHypothesis_AutomaticLagSelectionC, 2},
     {"_DriftBurstHypothesis_AsymptoticVarianceC", (DL_FUNC) &_DriftBurstHypothesis_AsymptoticVarianceC, 2},
+    {"_DriftBurstHypothesis_AutomaticLagSelectionC", (DL_FUNC) &_DriftBurstHypothesis_AutomaticLagSelectionC, 2},
     {"_DriftBurstHypothesis_DriftBurstLoopC", (DL_FUNC) &_DriftBurstHypothesis_DriftBurstLoopC, 8},
     {"_DriftBurstHypothesis_DriftBurstLoopCPAR", (DL_FUNC) &_DriftBurstHypothesis_DriftBurstLoopCPAR, 9},
     {NULL, NULL, 0}

@@ -1,0 +1,7 @@
+2019-24-01 Emil Sjoerup <emilsjoerup@live.dk>
+  *DESCRIPTION (Version): New version is 0.1.1
+  *Fix ambiguity in a call to sqrt() for int which caused installation failure on Solaris.
+  *More robust code, passing vectors of differing length for logprices and time are now stopped.
+  *The Mu and Sigma vectors returned now also start with a 0 instead of uninitiated memory.
+  *Documentation changed to make it more clear that the left-sided exponential kernel is used (no foresight).
+  

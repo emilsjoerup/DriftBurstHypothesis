@@ -5,12 +5,12 @@ HACWeightC <- function(iLag) {
     .Call(`_DriftBurstHypothesis_HACWeightC`, iLag)
 }
 
-AutomaticLagSelectionC <- function(vX, dMu) {
-    .Call(`_DriftBurstHypothesis_AutomaticLagSelectionC`, vX, dMu)
-}
-
 AsymptoticVarianceC <- function(vIn, iLag) {
     .Call(`_DriftBurstHypothesis_AsymptoticVarianceC`, vIn, iLag)
+}
+
+AutomaticLagSelectionC <- function(vX, dMu) {
+    .Call(`_DriftBurstHypothesis_AutomaticLagSelectionC`, vX, dMu)
 }
 
 DriftBurstLoopC <- function(vPreAveraged, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag) {
