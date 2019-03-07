@@ -3,7 +3,7 @@
 An R-package for the calculation of the Drift Burst Hypothesis test-statistic from the working paper Christensen, Oomen and Reno (2018) <DOI:10.2139/ssrn.2842535>.
 
 
-The test-statistic is calculated as follows:
+The t-statistic at period n is calculated as follows:
 
 ![equation](https://latex.codecogs.com/png.latex?%5Cbar%7BT%7D%5En%20%3D%20%5Csqrt%7B%5Cfrac%7Bh_%7Bn%7D%7D%7BK_%7B2%7D%7D%7D%5Cfrac%7B%5Chat%7B%5Cbar%7B%5Cmu%7D%7D_%7Bt%7D%5E%7Bn%7D%7D%7B%5Csqrt%7B%5Chat%7B%5Cbar%7B%5Csigma%7D%7D_%7Bt%7D%5E%7Bn%7D%7D%7D), 
 
