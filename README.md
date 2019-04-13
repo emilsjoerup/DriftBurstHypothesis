@@ -1,3 +1,45 @@
 # DriftBurstHypothesis
 
 An R-package for the calculation of the Drift Burst Hypothesis test-statistic from the working paper Christensen, Oomen and Reno (2018) <DOI:10.2139/ssrn.2842535>.
+
+
+***Beware that a bug is present in the code that may cause crashses! 
+I believe I have mitigated the bug to no longer cause crashes and it should not be a problem from the next version.
+If you encounter crashes with my code, please report.***
+
+
+***The bug occured when the second testtimes element was higher than the lowest timestamp (e.g. trying to test at 9:30:05 when the first trade occurred at 09:30:06), thus, the code was sending empty vectors into a loop where the vectors would be subset, this caused a `Col::subvec(): indices out of bounds or incorrectly used` error message. Now the error message will be displayed, but won't cause crashes (to my knowledge). Now, the second element will be iteratively removed from the testtimes vector, until there are observations for the first test to be carried out. The removed tests will be padded with 0's where they are not able to be carried out. This is done so it is still possible to cbind() the results where there were missing observations.
+If the test fails at other times, the  output will be NA.***
+
+
+
+
+
+
+The t-statistic at period n is calculated as follows:
+
+![equation](https://latex.codecogs.com/png.latex?%5Cbar%7BT%7D%5En%20%3D%20%5Csqrt%7B%5Cfrac%7Bh_%7Bn%7D%7D%7BK_%7B2%7D%7D%7D%5Cfrac%7B%5Chat%7B%5Cbar%7B%5Cmu%7D%7D_%7Bt%7D%5E%7Bn%7D%7D%7B%5Csqrt%7B%5Chat%7B%5Cbar%7B%5Csigma%7D%7D_%7Bt%7D%5E%7Bn%7D%7D%7D), 
+
+where the local mean estimator is:
+
+![equation](https://latex.codecogs.com/png.latex?%5Chat%7B%5Cbar%7B%5Cmu%7D%7D_%7Bt%7D%5E%7Bn%7D%3D%5Cfrac%7B1%7D%7Bh_%7Bn%7D%7D%5Csum_%7Bi%3D1%7D%5E%7Bn-k_%7Bn%7D&plus;2%7DK%5Cleft%28%5Cfrac%7Bt_%7Bi-1%7D-t%7D%7Bh_%7Bn%7D%7D%5Cright%29%5CDelta_%7Bi-1%7D%5E%7Bn%7D%5Coverline%7BY%7D),
+
+and the local variance estimator is:
+
+![equation](https://latex.codecogs.com/png.latex?%5Chat%7B%5Cbar%7B%5Csigma%7D%7D_%7Bt%7D%5E%7Bn%7D%20%3D%20%5Cfrac%7B1%7D%7Bh_%7Bn%7D%27%7D%5Cleft%5B%5Csum_%7Bi%3D1%7D%5E%7Bn-k_%7Bn%7D&plus;2%7D%5Cleft%28K%5Cleft%28%5Cfrac%7Bt_%7Bi-1%7D-t%7D%7Bh%27_%7Bn%7D%7D%5Cright%29%5CDelta_%7Bi-1%7D%5E%7Bn%7D%5Coverline%7BY%7D%5Cright%29%5E%7B2%7D&plus;2%5Csum_%7BL%3D1%7D%5E%7BL_%7Bn%7D%7D%5Comega%5Cleft%28%5Cfrac%7BL%7D%7BL_%7Bn%7D%7D%5Cright%29%5Csum_%7Bi%3D1%7D%5E%7Bn-k_%7Bn%7D-L&plus;2%7DK%5Cleft%28%5Cfrac%7Bt_%7Bi-1%7D-t%7D%7Bh_%7Bn%7D%27%7D%5Cright%29K%5Cleft%28%5Cfrac%7Bt_%7Bi&plus;L-1%7D-t%7D%7Bh_%7Bn%7D%27%7D%5Cright%29%5CDelta_%7Bi-1%7D%5E%7Bn%7D%5Coverline%7BY%7D%5CDelta_%7Bi-1&plus;L%7D%5E%7Bn%7D%5Coverline%7BY%7D%5Cright%5D)
+
+
+with:
+
+![equation](https://latex.codecogs.com/png.latex?%5CDelta_%7Bi%7D%5E%7Bn%7D%5Coverline%7BY%7D%20%3D%20%5Csum_%7Bj%3D1%7D%5E%7Bk_%7Bn%7D-1%7Dg_%7Bj%7D%5E%7Bn%7D%5CDelta_%7Bi&plus;j%7D%5E%7Bn%7DY)
+
+denoting the overlapping pre-averaged returns with the weighting function:
+
+
+![equation](https://latex.codecogs.com/png.latex?g%5Cleft%28x%5Cright%29%3D%5Ctext%7Bmin%7D%5Cleft%28x%2C1-x%5Cright%29),
+
+and
+
+![equation](https://latex.codecogs.com/png.latex?%5Comega%5Cleft%28%5Ccdot%5Cright%29)
+
+is a smooth kernel defined on the positive real numbers, ![equation](https://latex.codecogs.com/png.latex?L_%7Bn%7D) is the lag length over which the estimator is applied. By default, the lag-length will be determined by way of the Newey-West algorithm.
