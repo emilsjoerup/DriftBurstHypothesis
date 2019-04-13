@@ -1,4 +1,6 @@
 useDynLib(DriftBurstHypothesis, .registration=TRUE)
 importFrom("Rcpp", "evalCpp")
-importFrom("stats" , "filter")
+importFrom("stats", "filter")
+importFrom(xts, .indexDate)
+importFrom(zoo, index)
 export(drift_bursts)
