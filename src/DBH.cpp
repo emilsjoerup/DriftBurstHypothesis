@@ -1,10 +1,8 @@
 #include <RcppArmadillo.h>
-
 #if defined(_OPENMP)
 #include <omp.h>
 // [[Rcpp::plugins(openmp)]]
 #endif
-
 using namespace arma;
 
 const int iMaxLag = 20;
@@ -29,6 +27,9 @@ double AsymptoticVarianceC(arma::vec vIn, int iLag){
         vec vAc = zeros(1);
       }
       int iT = vIn.size();
+      if(iT<=iLag){
+        return(datum::nan);
+      }
       for(int i=0; i<iLag; i++){
         vAc[i] = sum(vIn(span((i+1), iT-1)) % vIn(span(0, (iT-i-2))));
       }
@@ -37,20 +38,24 @@ double AsymptoticVarianceC(arma::vec vIn, int iLag){
       return(dOut);
     }
     catch( std::exception &ex ) {
+      std::cout<<"unkown C++ error occured in asymptotic variance\n"<<endl;
       return(datum::nan);
     } catch(...) {
+      std::cout<<"unkown C++ error occured in asymptotic variance\n"<<endl;
       return(datum::nan);
     }
 }
 
 
 // [[Rcpp::export]]
-int AutomaticLagSelectionC(arma::vec vX, double dMu){
+double AutomaticLagSelectionC(arma::vec vX, double dMu){
   double dC = 2.6614;
   
   int iN = round(4.0 * pow((dMu/100), 0.16));
-  
   int iT = vX.size();
+  if(iT<=iN+1){
+    return(iMaxLag);
+  }
   vec vE = zeros(iN+1);
   vec vAc = zeros(iN);
   
@@ -85,7 +90,7 @@ Rcpp::List DriftBurstLoopC(arma::vec vPreAveraged, arma::vec diffedlogprices, ar
   int iN = vPreAveraged.size();
   int iQ;
   int iIdx;
-  int iAutoAcLag;
+  double iAutoAcLag;
   arma::vec vMu = zeros<vec>(iT);
   arma::vec vSigma = zeros<vec>(iT);
   arma::vec vX;
@@ -99,26 +104,26 @@ Rcpp::List DriftBurstLoopC(arma::vec vPreAveraged, arma::vec diffedlogprices, ar
     iIdx = sum((vX<=0))-1;
     
     vWm = exp(-abs(vX(span(0,iIdx))/iMeanBandwidth));  // exponential kernel
-
+    
     vMu[i] = sum(vWm(span(0,iIdx)) % vPreAveraged(span(0,iIdx))) / iMeanBandwidth; 
-
+    
     vWvar = exp(-abs(vX(span(0,iIdx))/iVarBandwidth));  // exponential kernel
-
+    
     if(iAcLag == -1){
       iQ = AutomaticLagSelectionC(diffedlogprices, sum(vWm));
-      vFoo[0] = iQ+ 2.0 * (iPreAverage-1);
-      iAutoAcLag = min(vFoo);
-      double dAsympVar = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))), iAutoAcLag) / iVarBandwidth; 
-      vSigma[i] = dAsympVar;
+      vFoo[0] = iQ;
+      iAutoAcLag = min(vFoo) + 2.0 * (iPreAverage-1);
+      vSigma[i] = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))), iAutoAcLag) / iVarBandwidth; 
+      
       
     }else{
-      double dAsympVar = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))), iAcLag) / iVarBandwidth;
-      vSigma[i] = dAsympVar;
+      vSigma[i] = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))), iAcLag) / iVarBandwidth;
+  
     }
     
     
   }
-
+  
   arma::vec vDb = sqrt(iMeanBandwidth) * vMu / sqrt(vSigma) ; 
   vDb[0] = 0;
   return(Rcpp::List::create(Rcpp::Named("DriftBursts") = vDb,
@@ -148,11 +153,10 @@ Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices,
   arma::vec vX;
   arma::vec vWm;
   arma::vec vWvar;
-  arma::vec vFoo(2); 
-  vFoo[1] = iMaxLag;
   //Parallelization setup
-#pragma omp parallel for default(none)\
-  shared(vPreAveraged, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag, vMu, vSigma, iT, iN, vFoo) \
+  #pragma omp parallel for default(none)\
+  shared(vPreAveraged, diffedlogprices, vTime, vTesttime, iMeanBandwidth,\
+         iVarBandwidth, iPreAverage, iAcLag, vMu, vSigma, iT, iN)\
     private(vX, vWm, vWvar, i, iIdx)
     
     for(i=1; i<iT; i++){
@@ -171,22 +175,21 @@ Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices,
       
       if(iAcLag == -1){
         
-        int iQ = AutomaticLagSelectionC(diffedlogprices, sum(vWm));
-        vFoo[0] = iQ + 2.0 * (iPreAverage-1); 
-        int iAutoAcLag = min(vFoo);
-        double dAsympVar = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))),iAutoAcLag) / iVarBandwidth; 
-        vSigma[i] = dAsympVar;
+        double iQ = AutomaticLagSelectionC(diffedlogprices, sum(vWm));
+        arma::vec vFoo = {iQ, iMaxLag};
+        int iAutoAcLag = min(vFoo)+ 2.0 * (iPreAverage-1);
+        vSigma[i]= AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))),iAutoAcLag) / iVarBandwidth; 
+        
         
       }else{
-        double dAsympVar = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))),iAcLag) / iVarBandwidth;
-        vSigma[i] = dAsympVar;
+        vSigma[i] = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))),iAcLag) / iVarBandwidth;
       }
       
       
       
     }
     
-  arma::vec vDb = sqrt(iMeanBandwidth) * vMu / sqrt(vSigma) ; 
+    arma::vec vDb = sqrt(iMeanBandwidth) * vMu / sqrt(vSigma) ; 
   Rcpp::List lOut =  Rcpp::List::create(Rcpp::Named("DriftBursts") = vDb,
                                         Rcpp::Named("Sigma") = vSigma,
                                         Rcpp::Named("Mu") = vMu);
@@ -196,10 +199,6 @@ Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices,
 #endif
     
     return(lOut);
-    
-    
+  
+  
 }
- 
-
-
- 
