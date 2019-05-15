@@ -3,16 +3,6 @@
 An R-package for the calculation of the Drift Burst Hypothesis test-statistic from the working paper Christensen, Oomen and Reno (2018) <DOI:10.2139/ssrn.2842535>.
 
 
-***Beware that a bug is present in the code that may cause crashses! 
-I believe I have mitigated the bug to no longer cause crashes and it should not be a problem from the next version.
-If you encounter crashes with my code, please report.***
-
-
-***The bug occured when the second testtimes element was higher than the lowest timestamp (e.g. trying to test at 9:30:05 when the first trade occurred at 09:30:06), thus, the code was sending empty vectors into a loop where the vectors would be subset, this caused a `Col::subvec(): indices out of bounds or incorrectly used` error message. Now the error message will be displayed, but won't cause crashes (to my knowledge). Now, the second element will be iteratively removed from the testtimes vector, until there are observations for the first test to be carried out. The removed tests will be padded with 0's where they are not able to be carried out. This is done so it is still possible to cbind() the results where there were missing observations.
-If the test fails at other times, the  output will be NA.***
-
-
-
 
 
 
