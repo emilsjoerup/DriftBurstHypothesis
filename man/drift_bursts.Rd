@@ -1,5 +1,8 @@
 \name{drift_bursts}
 \alias{drift_bursts}
+\alias{getMu}
+\alias{getSigma}
+\alias{getDB}
 \title{
 Drift Bursts
 }
@@ -27,10 +30,11 @@ A \code{numeric} containing the times at which to calculate the tests. The stand
 See details.
 }
   \item{PreAverage}{
-An \code{integer} denoting the period for pre-averaging estimates of the log-prices. 
+An \code{integer} denoting the length of pre-averaging estimates of the log-prices.
+
 }
   \item{AcLag}{
-An \code{integer} denoting which lag is to be used for the HAC estimator of the variance - the standard of \code{-1} denotes using an automatic lag selection algorithm.
+An \code{integer} greater than 1 denoting which lag is to be used for the HAC estimator of the variance - the standard of \code{-1} denotes using an automatic lag selection algorithm.
 }
   \item{Mean_bandwidth}{
 An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the mean.
@@ -50,11 +54,8 @@ A \code{logical} denoting whether warnings should be shown.
 }
 }
 \details{
-**********
-It is important to properly handle the testtimes argument of this function. If for example the standard is passed on a half day, the program may crash if parallelised. 
-I have not been able to find a suitable solution for this in the parallelised case. 
-Please, if you have one, send me an e-mail!
-**********
+
+If the testtimes vector contains instructions to test before the first trade (excluding the very first entry), or more than 15 minutes after the last trade, these entries will be deleted, as not doing so may cause crashes.
 
 The DBH test statistic cannot be calculated before 1 period of testtimes has passed.
 
@@ -62,11 +63,37 @@ The test statistic is unstable before \code{max(Mean_bandwidth , Variance_bandwi
 
 If times is provided and logprices is an \code{xts} object, the indices of logprice will be used regardless.
 
-Note that using an \code{xts} argument is slower than using a \code{numeric} due to the creation of the timestamps from the index of the input.
+Note that using an \code{xts} argument is slower than using a \code{numeric} and the timestamps due to the creation of the timestamps from the index of the input.
+
+
+The lags from the Newey-West algorithm is increased by 2 * (PreAveage-1) as due to the Pre-Averaging we know atleast this many lags should be corrected for due to the auto-correlation. The maximum of 20 lags is also increased by this same factor for the same reason.
+
 
 }
 \value{
-A list containing the series of the drift burst hypothesis test-statistic as well as the estimated local mean and variance series.
+An object of class \code{DBH} and \code{list} containing the series of the drift burst hypothesis test-statistic as well as the estimated local mean and variance series.
+
+The S3 class DBH has the following methods so far:
+\itemize{
+\item{\code{getDB}: Extracts the test-statistic.}
+\item{\code{getSigma}: Extracts the estimated local variance.}
+\item{\code{getMu}: Extracts the estimated local mean.}
+\item{\code{plot}: Plotting routine.}
+The plotting routine accepts 10 arguments for customization in the ... argument, which must be passed as a named list:
+\itemize{
+\item{\code{which}:Used for choosing which series to plot, valid choices are: \code{"DriftBursts"}, \code{"Sigma"}, \code{"Mu"}, and \code{c("Sigma","Mu")}, the order of the latter is irrelevant. Default = \code{"DriftBursts"}}
+\item{\code{price}:The price series which, if provided, will be overlayed in a red dotted line and the level will be shown at the right y-axis. (Only used if which is \code{"DriftBursts"}). Default = \code{NULL}}
+\item{\code{time}:Timestamps for the trades in seconds after midnight, which will be used for the x-axis of the plot if the price is overlayed. Default = \code{NULL}}
+\item{\code{startTime}:Start of the trading day in seconds after midnight. Default = \code{34200}}
+\item{\code{endTime}:End of the trading day in seconds after midnight. Default = \code{57600}}
+\item{\code{xlab}:The label of the x-axis. Default = \code{"time"}}
+\item{\code{ylab}:The label of the y-axis. Default = \code{"value"}}
+\item{\code{leg.x}:X-position of the legend in the case \code{which} is \code{"DriftBursts"} AND the price is overlayed. Default = \code{"topleft"}. Usage is as in the base \code{R} engine.}
+\item{\code{leg.y}:Y-position of the legend in the case \code{which} is \code{"DriftBursts"} AND the price is overlayed. Default = \code{"NULL"}. Usage is as in the base \code{R} engine.}
+
+
+}
+}
 }
 \references{
 Christensen, Oomen and Reno (2018) <DOI:10.2139/ssrn.2842535>.
@@ -149,7 +176,7 @@ vY[50000] = 500
 
 #Here, the observations are equidistant, but the code can handle unevenly spaced observations.
 timestamps = seq(34200 , 57600 , length.out = iT)
-StartTime = strptime("1970-01-01 00:00:00.0000", "%Y-%m-%d %H:%M:%OS", tz = "GMT")
+StartTime = strptime("1970-01-01 00:00:00.0000", "\%Y-\%m-\%d \%H:\%M:\%OS", tz = "GMT")
 Tradetime = StartTime + timestamps
 testtimes = seq(34200, 57600, 60)
 

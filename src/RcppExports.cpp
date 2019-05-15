@@ -30,7 +30,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // AutomaticLagSelectionC
-int AutomaticLagSelectionC(arma::vec vX, double dMu);
+double AutomaticLagSelectionC(arma::vec vX, double dMu);
 RcppExport SEXP _DriftBurstHypothesis_AutomaticLagSelectionC(SEXP vXSEXP, SEXP dMuSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
