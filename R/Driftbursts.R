@@ -113,4 +113,3 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
   return(lDriftBursts)
   
 }
-

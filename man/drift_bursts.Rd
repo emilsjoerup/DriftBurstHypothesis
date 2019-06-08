@@ -71,13 +71,13 @@ The lags from the Newey-West algorithm is increased by 2 * (PreAveage-1) as due 
 
 }
 \value{
-An object of class \code{DBH} and \code{list} containing the series of the drift burst hypothesis test-statistic as well as the estimated local mean and variance series.
+An object of class \code{DBH} and \code{list} containing the series of the drift burst hypothesis test-statistic as well as the estimated spot drift and variance series.
 
 The S3 class DBH has the following methods so far:
 \itemize{
 \item{\code{getDB}: Extracts the test-statistic.}
 \item{\code{getSigma}: Extracts the estimated local variance.}
-\item{\code{getMu}: Extracts the estimated local mean.}
+\item{\code{getMu}: Extracts the estimated local drift.}
 \item{\code{plot}: Plotting routine.}
 The plotting routine accepts 10 arguments for customization in the ... argument, which must be passed as a named list:
 \itemize{
@@ -157,10 +157,25 @@ DBHtStat = drift_bursts(timestamps,  logprices,
                         Mean_bandwidth = 300L, Variance_bandwidth = 900L,
                         bParallelize = FALSE)
 
-#plot series
-plot(vY , x = timestamps/86400 , type = 'l')
+
 #plot test statistic
-plot(DBHtStat$DriftBursts, x = testtimes/86400, type = 'l')
+plot(DBHtStat)
+#plot both test statistic and price
+plot(DBHtStat, price = vY, time = timestamps)
+#Plot the mu series
+plot(DBHtStat, which = "Mu")
+#plot the sigma series
+plot(DBHtStat, which = "Sigma")
+#plot both
+plot(DBHtStat, which = c("Mu", "Sigma"))
+
+
+#Means of the tstat, sigma, and mu series.
+mean(getDB(DBHtStat))
+mean(getSigma(DBHtStat))
+mean(getMu(DBHtStat))
+
+
 
 \dontrun{
 ################## same example with xts object:
@@ -188,8 +203,6 @@ DBH = drift_bursts(time = NULL,  log(price),
                    testtimes, PreAverage = 5, AcLag = -1L,
                    Mean_bandwidth = 300L, Variance_bandwidth = 900L, 
                    bParallelize = FALSE)
-
-plot(DBH$DriftBursts)
 
 #check for equality
 all.equal(as.numeric(DBHtStat$DriftBursts), as.numeric(DBH$DriftBursts))

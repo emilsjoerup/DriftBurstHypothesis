@@ -38,10 +38,10 @@ double AsymptoticVarianceC(arma::vec vIn, int iLag){
       return(dOut);
     }
     catch( std::exception &ex ) {
-      std::cout<<"unkown C++ error occured in asymptotic variance\n"<<endl;
+      Rf_warning("unkown C++ error occured in asymptotic variance\n");
       return(datum::nan);
     } catch(...) {
-      std::cout<<"unkown C++ error occured in asymptotic variance\n"<<endl;
+      Rf_warning("unkown C++ error occured in asymptotic variance\n");
       return(datum::nan);
     }
 }
@@ -50,7 +50,6 @@ double AsymptoticVarianceC(arma::vec vIn, int iLag){
 // [[Rcpp::export]]
 double AutomaticLagSelectionC(arma::vec vX, double dMu){
   double dC = 2.6614;
-  
   int iN = round(4.0 * pow((dMu/100), 0.16));
   int iT = vX.size();
   if(iT<=iN+1){
@@ -125,7 +124,6 @@ Rcpp::List DriftBurstLoopC(arma::vec vPreAveraged, arma::vec diffedlogprices, ar
   }
   
   arma::vec vDb = sqrt(iMeanBandwidth) * vMu / sqrt(vSigma) ; 
-  vDb[0] = 0;
   return(Rcpp::List::create(Rcpp::Named("DriftBursts") = vDb,
                             Rcpp::Named("Sigma") = vSigma,
                             Rcpp::Named("Mu") = vMu));
@@ -171,8 +169,6 @@ Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices,
       
       vWvar = exp(-abs(vX(span(0,iIdx))/iVarBandwidth));  // exponential kernel
       
-      
-      
       if(iAcLag == -1){
         
         double iQ = AutomaticLagSelectionC(diffedlogprices, sum(vWm));
@@ -189,7 +185,7 @@ Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices,
       
     }
     
-    arma::vec vDb = sqrt(iMeanBandwidth) * vMu / sqrt(vSigma) ; 
+  arma::vec vDb = sqrt(iMeanBandwidth) * vMu / sqrt(vSigma) ; 
   Rcpp::List lOut =  Rcpp::List::create(Rcpp::Named("DriftBursts") = vDb,
                                         Rcpp::Named("Sigma") = vSigma,
                                         Rcpp::Named("Mu") = vMu);

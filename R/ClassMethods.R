@@ -20,8 +20,8 @@ plot.DBH = function(x, ...){
   leg.y = opt$leg.y
 
   tstat = x$DriftBursts
-  sigma = x$Sigma
-  mu    = x$Mu
+  sigma = x$Sigma 
+  mu    = x$Mu 
   startpar = par(no.readonly = TRUE)
   legend.txt = ""
   testtimes  = seq(startTime, endTime, length.out = length(tstat))
@@ -38,11 +38,12 @@ plot.DBH = function(x, ...){
       price = as.numeric(price)
     }
   }
+  xtext = as.POSIXct(testtimes, origin = "1970-01-01")
   if(all(which == "DriftBursts")){ #use all() because this function should accept which arguments with length longer than 1
-    par(mar = c(4,3.5,4,1.25), mgp = c(2,1,0))
+    par(mar = c(4,3.5,2,1.25), mgp = c(2,1,0))
     if(!is.null(price)) par(mar = c(4,3.5,4,4), mgp = c(2,1,0)) #makes room for values on the right y-axis
     main = "Drift Bursts test statistic"
-    plot(tstat, x = testtimes/86400, type = "l", xlab = xlab, ylab = ylab, main = main)
+    plot(tstat, x = xtext, type = "l", xlab =xlab, ylab = ylab, main = main)
     abline(h = horizLines, col = "grey" , lty = 3)
     legend.txt = "t-stat"
     if(!is.null(price)){
@@ -54,35 +55,36 @@ plot.DBH = function(x, ...){
       axis(4)
       mtext(side = 4, text = "price", line = 2.5)
       legend.txt = c(legend.txt, "price")
-    }
-    legend(x = leg.x, leg.y, legend = legend.txt, lty = c(1,2), col = c(1,2), bg = rgb(0,0,0,0), box.lwd = 0, 
+      legend(x = leg.x, leg.y, legend = legend.txt, lty = c(1,2), col = c(1,2), bg = rgb(0,0,0,0), box.lwd = 0, 
            box.col = rgb(0,0,0,0))
+    }
   }
   
   if(all(which == "Sigma")){ #use all() because this function should accept which arguments with length longer than 1
     main = "Sigma"
     par(mar = c(4,3.5,2,1.25), mgp = c(2,1,0))
-    plot(sigma, x = testtimes/86400, type = "l", xlab = xlab, ylab = ylab, ...)  
+    plot(sigma, x = xtext, type = "l", xlab = xlab, ylab = ylab, main = main)  
   }
   
   if(all(which == "Mu")){ #use all() because this function should accept which arguments with length longer than 1
     main = "Mu"
     par(mar = c(4,3.5,2,1.25), mgp = c(2,1,0))
-    plot(mu, x = testtimes/86400, type = "l", xlab = xlab, ylab = ylab, ...)
+    plot(mu, x = xtext, type = "l", xlab = xlab, ylab = ylab, main = main)
     abline(h = 0, col = "grey" , lty = 3)
   }
   
   if("Mu" %in% which & "Sigma" %in% which){
     par(mfrow = c(2,1), omi = c(0,0,0,0), mgp = c(2,1,0), mai = c(0.75,0.75,0.3,0.25))
     main = "Mu"
-    plot(mu, x = testtimes/86400, type = "l", xlab = "", ylab = ylab, main = main)
+    plot(mu, x = xtext, type = "l", xlab = "", ylab = ylab, main = main)
     abline(h = 0, col = "grey" , lty = 3)
     main = "Sigma"
-    plot(sigma, x = testtimes/86400, type = "l", xlab = xlab, ylab = ylab, main = main)  
+    plot(sigma, x = xtext, type = "l", xlab = xlab, ylab = ylab, main = main)  
   }
   par(startpar)
   invisible(NULL)
 }
+
 
 
 getDB = function(object){
@@ -93,6 +95,7 @@ getDB.DBH = function(object){
   DB = object$DriftBursts
   return(DB)
 }
+
 
 getSigma = function(object){
   UseMethod("getSigma", object)

@@ -20,6 +20,5 @@
 2019-14-05 Emil Sjoerup <emilsjoerup@live.dk>
   *New plot method for the "DBH" S3 class also introduced in this version
   *New methods getMu and getSigma to get the mu and sigma estimates
-  
-  
-  
+2019-06-06 Emil Sjoerup <emilsjoerup@live.dk>
+  *New method getDH to get the Drift Bursts test statistic added.
