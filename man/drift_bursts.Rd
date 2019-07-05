@@ -57,7 +57,7 @@ A \code{logical} denoting whether warnings should be shown.
 
 If the testtimes vector contains instructions to test before the first trade (excluding the very first entry), or more than 15 minutes after the last trade, these entries will be deleted, as not doing so may cause crashes.
 
-The DBH test statistic cannot be calculated before 1 period of testtimes has passed.
+The test statistic is NOT calculated on the first entry of testtimes, please use this to denote the start of a trading day.
 
 The test statistic is unstable before \code{max(Mean_bandwidth , Variance_bandwidth)} seconds has passed.
 
@@ -81,18 +81,19 @@ The S3 class DBH has the following methods so far:
 \item{\code{plot}: Plotting routine.}
 The plotting routine accepts 10 arguments for customization in the ... argument, which must be passed as a named list:
 \itemize{
-\item{\code{which}:Used for choosing which series to plot, valid choices are: \code{"DriftBursts"}, \code{"Sigma"}, \code{"Mu"}, and \code{c("Sigma","Mu")}, the order of the latter is irrelevant. Default = \code{"DriftBursts"}}
-\item{\code{price}:The price series which, if provided, will be overlayed in a red dotted line and the level will be shown at the right y-axis. (Only used if which is \code{"DriftBursts"}). Default = \code{NULL}}
-\item{\code{time}:Timestamps for the trades in seconds after midnight, which will be used for the x-axis of the plot if the price is overlayed. Default = \code{NULL}}
-\item{\code{startTime}:Start of the trading day in seconds after midnight. Default = \code{34200}}
-\item{\code{endTime}:End of the trading day in seconds after midnight. Default = \code{57600}}
-\item{\code{xlab}:The label of the x-axis. Default = \code{"time"}}
-\item{\code{ylab}:The label of the y-axis. Default = \code{"value"}}
-\item{\code{leg.x}:X-position of the legend in the case \code{which} is \code{"DriftBursts"} AND the price is overlayed. Default = \code{"topleft"}. Usage is as in the base \code{R} engine.}
-\item{\code{leg.y}:Y-position of the legend in the case \code{which} is \code{"DriftBursts"} AND the price is overlayed. Default = \code{"NULL"}. Usage is as in the base \code{R} engine.}
-
-
-}
+  \item{\code{which}:Used for choosing which series to plot, valid choices are: \code{"DriftBursts"}, \code{"DB"}, \code{"Sigma"}, \code{"Mu"}, and     \code{c("Sigma","Mu")}, the order of the latter is irrelevant. The case of the input does not matter. Default = \code{"DriftBursts"}}
+  \item{\code{price}:The price series which, if provided, will be overlayed in a red dotted line and the level will be shown at the right y-axis.       (Only   used if which is \code{"DriftBursts"}). Default = \code{NULL}}
+  \item{\code{time}:Timestamps for the trades in seconds after midnight, which will be used for the x-axis of the plot if the price is overlayed.       Default = \code{NULL}}
+  \item{\code{startTime}:Start of the trading day in seconds after midnight. Default = \code{34200}}
+  \item{\code{endTime}:End of the trading day in seconds after midnight. Default = \code{57600}}
+  \item{\code{xlab}:The label of the x-axis. Default = \code{"time"}}
+  \item{\code{ylab}:The label of the y-axis. Default = \code{"value"}}
+  \item{\code{leg.x}:X-position of the legend in the case \code{which} is \code{"DriftBursts"} AND the price is overlayed. Default = \code{"topleft"}.   Usage is as in the base \code{R} engine.}
+  \item{\code{leg.y}:Y-position of the legend in the case \code{which} is \code{"DriftBursts"} AND the price is overlayed. Default = \code{"NULL"}.     Usage is as in the base \code{R} engine.}
+  \item{\code{tz}: \code{character} denoting the time-zone. Default = \code{"GMT"}}
+  \item{\code{annualize}: \code{logical} denoting whether to annualize in case which contains "mu", "sigma", or both. Default = FALSE}
+  \item{\code{nDays}: \code{numeric} denoting how many to use for annualization if \code{annualize} is TRUE. Default = 252}
+  }
 }
 }
 \references{
@@ -150,6 +151,8 @@ timestamps = seq(34200 , 57600 , length.out = iT)
 testtimes = seq(34200, 57600, 60)
 logprices = log(vY)
 
+library("DriftBurstHypothesis")
+
 #calculating drift burst hypothesis
 
 DBHtStat = drift_bursts(timestamps,  logprices,
@@ -205,6 +208,6 @@ DBH = drift_bursts(time = NULL,  log(price),
                    bParallelize = FALSE)
 
 #check for equality
-all.equal(as.numeric(DBHtStat$DriftBursts), as.numeric(DBH$DriftBursts))
+all.equal(as.numeric(getDH(DBHtStat)), as.numeric(getDB(DBH)))
 }
 }

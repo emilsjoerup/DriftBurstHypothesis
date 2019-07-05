@@ -9,7 +9,7 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
   iT                   = length(logprices)
   vPreAveraged         = rep(0, iT - 1)
   xts                  = FALSE
-  pad = removedFromEnd =  0
+  pad = removedFromEnd = 0
   #########  init end  ############
   
   ###Checks###
@@ -20,11 +20,15 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
     stop("Variance_bandwidth must be a positive integer")
   }
   if(AcLag !=-1 && AcLag%%1!=0 | -1>AcLag | AcLag == 1){
-    stop("AcLag must be a positive integer greater than 1, or -1. \n
+    stop("AcLag must be a positive integer greater than or equal to 1, or -1. \n
          The standard of -1 designates usage of an automated lag selection algorithm.")
     #Specifically Newey-West 1994
   }
+  if(PreAverage <=0 | PreAverage%%1!=0 ){
+    stop("PreAverage must be a positive integer. No preaveraging is done when PreAverage = 1.")
+  }
   if(inherits(logprices, "xts")){
+    tz = tzone(logprices)
     time = index(logprices)
     time = as.numeric(time) - (.indexDate(logprices)[1] * 86400)
     vIndex = as.POSIXct((.indexDate(logprices)[1] * 86400) + testtimes, origin = "1970-01-01")
@@ -39,7 +43,7 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
     stop("Time and logprices input not of same length, to prevent crashing this is not allowed.")
   }
   if((is.na(iCores) | iCores %% 1 != 0) & bParallelize){
-    print("No iCores argument was provided, or the provided iCores argument is not an integer.\n
+    warning("No iCores argument was provided, or the provided iCores argument is not an integer.\n
           Sequential evaluation is used.")
     bParallelize = FALSE
   }
@@ -55,9 +59,9 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
       pad = pad + 1
     }
     if(warnings){
-    cat("\nThe first testing time is  before any observations. May cause crashes.")
-    cat("\nItereatively removing first testing time until this is no longer the case.")
-    cat("\nremoved the first", pad, "entries from testtimes\n")
+    warning(paste("\nThe first testing time is  before any observations. May cause crashes.",
+                  "\nItereatively removing first testing time until this is no longer the case.",
+                  "\nremoved the first", pad, "entries from testtimes and replacing with a 0\n"))
     }
   }
   if(max(testtimes)>max(time) + 900){
@@ -68,17 +72,18 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
       removedFromEnd = removedFromEnd + 1
     }
     if(warnings){
-      cat("\nThe last testing time more than 15 minutes after the last trade, this may cause crashes.")
-      cat("\nIteratively removing the last testing time until this is no longer the case.")
-      cat("\nremoved the last", removedFromEnd, "entries from testtimes\n")
+      warning(paste("\nThe last testing time is more than 15 minutes after the last trade, this may cause crashes.",
+                    "\nIteratively removing the last testing time until this is no longer the case.",
+                    "\nremoved the last", removedFromEnd, "entries from testtimes\n"))
+      
     }
     
   }
   ###Checks end###
   
-  
-  vPreAveraged[(k*2 - 1):(iT - 1)] = filter(x = logprices, c(rep(1,k),rep( -1,k)))[k:(iT - k)] #Preaveraging
 
+  vPreAveraged[(k*2 - 1):(iT - 1)] = filter(x = logprices, c(rep(1,k),rep( -1,k)))[k:(iT - k)] #Preaveraging
+  
   if(bParallelize & !is.na(iCores)){ #Parallel evaluation or not?
    lDriftBursts = DriftBurstLoopCPAR(c(0,vPreAveraged), c(0,vX), time, testtimes, Mean_bandwidth, 
                                      Variance_bandwidth, PreAverage, AcLag, iCores )
@@ -99,11 +104,14 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
   }
   
   if(xts){
-    lDriftBursts[["DriftBursts"]] = xts(lDriftBursts[["DriftBursts"]], order.by = vIndex )
-    lDriftBursts[["Sigma"]]       = xts(lDriftBursts[["Sigma"]], order.by = vIndex )
-    lDriftBursts[["Mu"]]          = xts(lDriftBursts[["Mu"]], order.by = vIndex )
+    lDriftBursts[["DriftBursts"]] = xts(lDriftBursts[["DriftBursts"]], order.by = vIndex, tz = tz)
+    lDriftBursts[["Sigma"]]       = xts(lDriftBursts[["Sigma"]], order.by = vIndex, tz = tz)
+    lDriftBursts[["Mu"]]          = xts(lDriftBursts[["Mu"]], order.by = vIndex, tz = tz)
   }
   
+  lInfo = list("Variance_bandwidth" = Variance_bandwidth, "Mean_bandwidth" = Mean_bandwidth,"PreAverage" = PreAverage,
+               "nObs" = iT)
+  lDriftBursts[["Info"]] = lInfo
   #replace NANs with 0's
   NANS = is.nan(lDriftBursts[["Sigma"]])
   lDriftBursts[["DriftBursts"]][NANS] = 0
@@ -111,5 +119,4 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
   
   class(lDriftBursts) = c("DBH", "list")
   return(lDriftBursts)
-  
 }
