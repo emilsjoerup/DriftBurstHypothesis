@@ -21,7 +21,7 @@ plot.DBH = function(x, ...){
   leg.y = opt$leg.y
   annualize = opt$annualize
   nDays     = opt$nDays
-  tstat = getDB(DriftBursts)
+  tstat = getDB(x)
   sigma = getSigma(x, annualize, nDays) 
   mu    = getMu(x, annualize, nDays)
   MB    = x$Info$Mean_Bandwidth
@@ -94,7 +94,6 @@ plot.DBH = function(x, ...){
     axis.POSIXct(side  = 1, at = seq.POSIXt(xtext[1], xtext[length(xtext)], length.out = 7))
   }
   par(startpar)
-  invisible(NULL)
 }
 
 

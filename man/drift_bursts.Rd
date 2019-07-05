@@ -155,33 +155,34 @@ library("DriftBurstHypothesis")
 
 #calculating drift burst hypothesis
 
-DBHtStat = drift_bursts(timestamps,  logprices,
+DBH = drift_bursts(timestamps,  logprices,
                         testtimes, PreAverage = 5, AcLag = -1L,
                         Mean_bandwidth = 300L, Variance_bandwidth = 900L,
                         bParallelize = FALSE)
 
 
 #plot test statistic
-plot(DBHtStat)
+plot(DBH)
 #plot both test statistic and price
-plot(DBHtStat, price = vY, time = timestamps)
+plot(DBH, price = vY, time = timestamps)
 #Plot the mu series
-plot(DBHtStat, which = "Mu")
+plot(DBH, which = "Mu")
 #plot the sigma series
-plot(DBHtStat, which = "Sigma")
+plot(DBH, which = "Sigma")
 #plot both
-plot(DBHtStat, which = c("Mu", "Sigma"))
+plot(DBH, which = c("Mu", "Sigma"))
 
 
 #Means of the tstat, sigma, and mu series.
-mean(getDB(DBHtStat))
-mean(getSigma(DBHtStat))
-mean(getMu(DBHtStat))
+mean(getDB(DBH))
+mean(getSigma(DBH))
+mean(getMu(DBH))
 
 
 
 \dontrun{
 ################## same example with xts object:
+library("xts")
 #Set parameter values of the simulation
 iT = 66500; dSigma = 0.3; dPhi = 0.98; dMu = -10;
 #set seed for reproducibility
@@ -202,12 +203,12 @@ testtimes = seq(34200, 57600, 60)
 price = xts(vY, Tradetime)
 
 
-DBH = drift_bursts(time = NULL,  log(price), 
+DBHxts = drift_bursts(time = NULL,  log(price), 
                    testtimes, PreAverage = 5, AcLag = -1L,
                    Mean_bandwidth = 300L, Variance_bandwidth = 900L, 
                    bParallelize = FALSE)
 
 #check for equality
-all.equal(as.numeric(getDH(DBHtStat)), as.numeric(getDB(DBH)))
+all.equal(as.numeric(getDB(DBH)), as.numeric(getDB(DBHxts)))
 }
 }
