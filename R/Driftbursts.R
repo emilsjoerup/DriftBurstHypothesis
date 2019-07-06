@@ -4,7 +4,6 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
 
   #########  Initialization  ############
   k                    = PreAverage 
-  AcLag                = AcLag
   vX                   = diff(logprices)
   iT                   = length(logprices)
   vPreAveraged         = rep(0, iT - 1)
@@ -28,13 +27,13 @@ drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60
     stop("PreAverage must be a positive integer. No preaveraging is done when PreAverage = 1.")
   }
   if(inherits(logprices, "xts")){
-    tz = tzone(logprices)
-    time = index(logprices)
-    time = as.numeric(time) - (.indexDate(logprices)[1] * 86400)
-    vIndex = as.POSIXct((.indexDate(logprices)[1] * 86400) + testtimes, origin = "1970-01-01")
+    tz        = tzone(logprices)
+    time      = index(logprices)
+    time      = as.numeric(time) - (.indexDate(logprices)[1] * 86400)
+    vIndex    = as.POSIXct((.indexDate(logprices)[1] * 86400) + testtimes, origin = "1970-01-01")
     logprices = as.numeric(t(logprices)) ##need to transpose, otherwise the program will crash.
-    vX = as.numeric(vX)[-1] ### need to remove first entry because diff() on an xts object produces NA in first entry.
-    xts = TRUE
+    vX        = as.numeric(vX)[-1] ### need to remove first entry because diff() on an xts object produces NA in first entry.
+    xts       = TRUE
   }
   if((anyNA(time) & !is.null(time)) | anyNA(logprices) | anyNA(testtimes)){
     stop("NA's in time, logprices or testtimes - might cause crashes and are thus disallowed")

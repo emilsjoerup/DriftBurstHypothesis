@@ -19,7 +19,7 @@ arma::vec HACWeightC(int iLag){
 
 
 //[[Rcpp::export]]
-double AsymptoticVarianceC(arma::vec vIn, int iLag){ 
+double AsymptoticVarianceC(arma::vec vIn, int iLag){ // remember to remove!
   int iT = vIn.size();
   arma::vec vW;
   if(iT<=iLag){

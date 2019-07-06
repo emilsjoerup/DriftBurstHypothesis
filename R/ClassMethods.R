@@ -4,34 +4,35 @@ plot.DBH = function(x, ...){
   options = list(...)
   #### List of standard options
   opt = list(which = "DriftBursts", price = NULL, time = NULL, startTime = 34200, endTime = 57600,
-  xlab = "time", ylab = "value",  leg.x = "topleft", leg.y = NULL, tz = "GMT", annualize = FALSE, nDays = 252)
+             xlab = "time", ylab = "value",  leg.x = "topleft", leg.y = NULL, 
+             tz = "GMT", annualize = FALSE, nDays = 252)
   #### Override standard options where user passed new options
   opt[names(options)] = options
   #### Extract options (better way to do it?)
-  which = tolower(opt$which)
-  price = opt$price
-  time  = opt$time
-  startTime = opt$startTime  
-  endTime = opt$endTime  
-  xlab = opt$xlab
-  ylab = opt$ylab
-  main = opt$main
-  tz    = opt$tz
-  leg.x = opt$leg.x
-  leg.y = opt$leg.y
-  annualize = opt$annualize
-  nDays     = opt$nDays
-  tstat = getDB(x)
-  sigma = getSigma(x, annualize, nDays) 
-  mu    = getMu(x, annualize, nDays)
-  MB    = x$Info$Mean_Bandwidth
-  VB    = x$Info$Variance_Bandwidth
-  startpar = par(no.readonly = TRUE)
+  which      = tolower(opt$which)
+  price      = opt$price
+  time       = opt$time
+  startTime  = opt$startTime  
+  endTime    = opt$endTime  
+  xlab       = opt$xlab
+  ylab       = opt$ylab
+  main       = opt$main
+  tz         = opt$tz
+  leg.x      = opt$leg.x
+  leg.y      = opt$leg.y
+  annualize  = opt$annualize
+  nDays      = opt$nDays
+  tstat      = getDB(x)
+  sigma      = getSigma(x, annualize, nDays) 
+  mu         = getMu(x, annualize, nDays)
+  MB         = x$Info$Mean_Bandwidth
+  VB         = x$Info$Variance_Bandwidth
+  startpar   = par(no.readonly = TRUE)
   legend.txt = ""
   testtimes  = seq(startTime, endTime, length.out = length(tstat))
   horizLines = seq(round(min(tstat)), round(max(tstat)), 2)
   ###Setup done
-  if(!all(which %in% c("driftbursts", "mu", "sigma"))){
+  if(!all(which %in% c("driftbursts", "mu", "sigma", "db"))){
     stop("The which argument must be a character vector containing either:\n
          Sigma, Mu, both of these or DriftBursts. 
          Case doesn't matter.")
@@ -39,12 +40,12 @@ plot.DBH = function(x, ...){
   if(inherits(tstat, "xts")){
     testtimes = index(tstat)
     testtimes = as.numeric(testtimes) - (.indexDate(tstat)[1] * 86400)
-    tstat = as.numeric(tstat)
-    sigma = as.numeric(sigma)
-    mu    = as.numeric(mu)
+    tstat     = as.numeric(tstat)
+    sigma     = as.numeric(sigma)
+    mu        = as.numeric(mu)
     if(!is.null(price)){
-      time = index(price)
-      time = as.numeric(time) - (.indexDate(price)[1] * 86400)
+      time  = index(price)
+      time  = as.numeric(time) - (.indexDate(price)[1] * 86400)
       price = as.numeric(price)
     }
   }
@@ -67,7 +68,7 @@ plot.DBH = function(x, ...){
       mtext(side = 4, text = "price", line = 2.5)
       legend.txt = c(legend.txt, "price")
       legend(x = leg.x, leg.y, legend = legend.txt, lty = c(1,2), col = c(1,2), bg = rgb(0,0,0,0), box.lwd = 0, 
-           box.col = rgb(0,0,0,0))
+             box.col = rgb(0,0,0,0))
     }
   }
   if(all(which == "sigma")){ #use all() because this function should accept which arguments with length longer than 1

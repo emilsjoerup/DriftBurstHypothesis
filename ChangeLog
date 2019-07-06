@@ -26,7 +26,6 @@
   *add timezones to the code, output should no longer have timezones different from the input
 2019-06-24 Emil Sjoerup <emilsjoerup@live.dk>
   *Fix a mistake that lead to foresight in the lag selection algorithm
-  *Allow for no pre-averaging
   *More helpful messages
 2019-06-25 Emil Sjoerup <emilsjoerup@live.dk>
   *Allow for different time-zones in plotting. The standard is that a trading day starts at 9:30
