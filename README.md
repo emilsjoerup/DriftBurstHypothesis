@@ -2,10 +2,6 @@
 
 An R-package for the calculation of the Drift Burst Hypothesis test-statistic from the working paper Christensen, Oomen and Reno (2018) <DOI:10.2139/ssrn.2842535>.
 
-
-
-
-
 The t-statistic at period n is calculated as follows:
 
 ![equation](https://latex.codecogs.com/png.latex?%5Cbar%7BT%7D%5En%20%3D%20%5Csqrt%7B%5Cfrac%7Bh_%7Bn%7D%7D%7BK_%7B2%7D%7D%7D%5Cfrac%7B%5Chat%7B%5Cbar%7B%5Cmu%7D%7D_%7Bt%7D%5E%7Bn%7D%7D%7B%5Csqrt%7B%5Chat%7B%5Cbar%7B%5Csigma%7D%7D_%7Bt%7D%5E%7Bn%7D%7D%7D), 
@@ -33,3 +29,29 @@ and
 ![equation](https://latex.codecogs.com/png.latex?%5Comega%5Cleft%28%5Ccdot%5Cright%29)
 
 is a smooth kernel defined on the positive real numbers, ![equation](https://latex.codecogs.com/png.latex?L_%7Bn%7D) is the lag length over which the estimator is applied. By default, the lag-length will be determined by way of the Newey-West algorithm.
+
+
+
+
+
+## Example:
+```
+library(highfrequency)
+library(xts)
+library(DriftBurstHypothesis)
+data("sample_tdata")
+price = xts(as.numeric(sample_tdata$PRICE), index(sample_tdata))
+plot(price)
+testtimes = seq(34200, 57600, 60)
+
+
+
+DBHxts = drift_bursts(time = NULL,  log(price),
+                      testtimes, PreAverage = 5, AcLag = -1L,
+                      Mean_bandwidth = 300L, Variance_bandwidth = 900L,
+                      bParallelize = TRUE, iCores = 8)
+
+plot(DBHxts, price = price)
+```
+
+![Example plot](https://i.imgur.com/LTWi7uM.png)
