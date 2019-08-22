@@ -13,7 +13,7 @@ test_that("DBH error codes",{
 context("DBH test")
 test_that("DBH sim test", {
   set.seed(123)
-  iT = 23400; Mean_bandwidth = 300L
+  iT = 23400; meanBandwidth = 300L
   timestamps = seq(0, 23400, length.out = iT+1)
   testtimes  = seq(0, 23400, 60L)
   
@@ -21,10 +21,10 @@ test_that("DBH sim test", {
   p = c(0,cumsum(r))
   
   
-  DBH = drift_bursts(timestamps, p, testtimes, PreAverage = 1, AcLag = -1, 
-                     Mean_bandwidth = Mean_bandwidth, Variance_bandwidth = 5*Mean_bandwidth, bParallelize = FALSE)
-  expect_equal(mean(getMu(DBH)[-1]),0.02516096)
-  expect_equal(mean(getSigma(DBH)[-1]), 0.9629604)
+  DBH = drift_bursts(timestamps, p, testtimes, preAverage = 1, ACLag = -1, 
+                     meanBandwidth = meanBandwidth, varianceBandwidth = 5*meanBandwidth, bParallelize = FALSE)
+  expect_equal(mean(getMu(DBH)[-1]),0.02515989)
+  expect_equal(mean(getSigma(DBH)[-1]), 0.96291924)
 })
 
 
@@ -82,8 +82,8 @@ test_that("DBH Examples check",{
   #calculating drift burst hypothesis
   
   DBH = drift_bursts(timestamps,  logprices,
-                     testtimes, PreAverage = 5, AcLag = -1L,
-                     Mean_bandwidth = 300L, Variance_bandwidth = 900L,
+                     testtimes, preAverage = 5, ACLag = -1L,
+                     meanBandwidth = 300L, varianceBandwidth = 900L,
                      bParallelize = FALSE)
   
   
@@ -100,9 +100,9 @@ test_that("DBH Examples check",{
   plot5 = plot(DBH, which = c("Mu", "Sigma"))
   
   #Means of the tstat, sigma, and mu series.
-  expect_equal(mean(getDB(DBH)), 0.01859701)
-  expect_equal(mean(getSigma(DBH)), 0.12483728)
-  expect_equal(mean(getMu(DBH)), - 0.001151098)
+  expect_equal(mean(getDB(DBH)[-1]), 0.01864469)
+  expect_equal(mean(getSigma(DBH)[-1]), 0.04404034)
+  expect_equal(mean(getMu(DBH)[-1]), -0.0004060865)
   
   
   
@@ -129,9 +129,9 @@ test_that("DBH Examples check",{
   price = xts(vY, Tradetime)
   
   
-  DBHxts = drift_bursts(time = NULL,  log(price), 
-                        testtimes, PreAverage = 5, AcLag = -1L,
-                        Mean_bandwidth = 300L, Variance_bandwidth = 900L, 
+  DBHxts = drift_bursts(timestamps = NULL,  log(price), 
+                        testtimes, preAverage = 5, ACLag = -1L,
+                        meanBandwidth = 300L, varianceBandwidth = 900L, 
                         bParallelize = FALSE)
   plot6 = plot(DBHxts)
   expect_true(all.equal.list(plot, plot6))

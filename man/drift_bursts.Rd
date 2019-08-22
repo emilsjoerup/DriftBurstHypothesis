@@ -10,36 +10,36 @@ Drift Bursts
 Calculates the Test-Statistic for the Drift Burst Hypothesis.
 }
 \usage{
-drift_bursts(time = NULL, logprices, testtimes = seq(34200, 57600, 60),
-             PreAverage = 5, AcLag = -1L, Mean_bandwidth = 300L, 
-             Variance_bandwidth = 900L, bParallelize = FALSE, iCores = NA,
-             warnings = TRUE)
+drift_bursts(timestamps = NULL, logPrices, testTimes = seq(34200, 57600, 60),
+                        preAverage = 5, ACLag = -1L, meanBandwidth = 300L, 
+                        varianceBandwidth = 900L, bParallelize = FALSE,
+                        iCores = NA, warnings = TRUE)
 }
 
 \arguments{
-  \item{time}{
+  \item{timestamps}{
 Either:
 A \code{numeric} of timestamps for the trades in seconds after midnight.
 Or: NULL, when the time argument is NULL, the logprices argument must be an \code{xts} object.
 }
-  \item{logprices}{
+  \item{logPrices}{
 A \code{numeric} or \code{xts} object containing the log-prices of the asset.
 }
-  \item{testtimes}{
+  \item{testTimes}{
 A \code{numeric} containing the times at which to calculate the tests. The standard of \code{seq(34200, 57600, 60)} denotes calculating the test-statistic once per minute, i.e. 391 times for a typical 6.5 hour trading day from 9:30:00 to 16:00:00.
 See details.
 }
-  \item{PreAverage}{
+  \item{preAverage}{
 An \code{integer} denoting the length of pre-averaging estimates of the log-prices.
 
 }
-  \item{AcLag}{
-An \code{integer} greater than 1 denoting which lag is to be used for the HAC estimator of the variance - the standard of \code{-1} denotes using an automatic lag selection algorithm.
+  \item{ACLag}{
+An positive \code{integer} denoting how many lags are to be used for the HAC estimator of the variance - the standard of \code{-1} denotes using an automatic lag selection algorithm for each iteration..
 }
-  \item{Mean_bandwidth}{
+  \item{meanBandwidth}{
 An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the mean.
 }
-  \item{Variance_bandwidth}{
+  \item{varianceBandwidth}{
 An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the variance.
 }
   \item{bParallelize}{
@@ -59,7 +59,7 @@ If the testtimes vector contains instructions to test before the first trade (ex
 
 The test statistic is NOT calculated on the first entry of testtimes, please use this to denote the start of a trading day.
 
-The test statistic is unstable before \code{max(Mean_bandwidth , Variance_bandwidth)} seconds has passed.
+The test statistic is unstable before \code{max(meanBandwidth , varianceBandwidth)} seconds has passed.
 
 If times is provided and logprices is an \code{xts} object, the indices of logprice will be used regardless.
 
@@ -71,13 +71,13 @@ The lags from the Newey-West algorithm is increased by 2 * (PreAveage-1) as due 
 
 }
 \value{
-An object of class \code{DBH} and \code{list} containing the series of the drift burst hypothesis test-statistic as well as the estimated spot drift and variance series.
+An object of class \code{DBH} and \code{list} containing the series of the drift burst hypothesis test-statistic as well as the estimated spot drift and variance series. The list also contains some information such as the variance and mean bandwidths along with the pre-averaging setting and the amount of observations.
 
 The S3 class DBH has the following methods so far:
 \itemize{
 \item{\code{getDB}: Extracts the test-statistic.}
-\item{\code{getSigma}: Extracts the estimated local variance.}
-\item{\code{getMu}: Extracts the estimated local drift.}
+\item{\code{getSigma}: Extracts the estimated local variance. Note that for preAverage != 1, this value cannot be directly interpreted as the volatility as it can with preAverage = 1, a correction for this is being worked on. This does not affect the test statistic!}
+\item{\code{getMu}: Extracts the estimated local drift. Note that for preAverage != 1, this value cannot be directly interpreted as the drift as it can with preAverage = 1, a correction for this is being worked on. This does not affect the test statistic!}
 \item{\code{plot}: Plotting routine.}
 The plotting routine accepts 10 arguments for customization in the ... argument, which must be passed as a named list:
 \itemize{
@@ -148,7 +148,7 @@ vY[50000] = 500
 
 #Here, the observations are equidistant, but the code can handle unevenly spaced observations.
 timestamps = seq(34200 , 57600 , length.out = iT)
-testtimes = seq(34200, 57600, 60)
+testTimes = seq(34200, 57600, 60)
 logprices = log(vY)
 
 library("DriftBurstHypothesis")
@@ -156,8 +156,8 @@ library("DriftBurstHypothesis")
 #calculating drift burst hypothesis
 
 DBH = drift_bursts(timestamps,  logprices,
-                        testtimes, PreAverage = 5, AcLag = -1L,
-                        Mean_bandwidth = 300L, Variance_bandwidth = 900L,
+                        testTimes, preAverage = 5, ACLag = -1L,
+                        meanBandwidth = 300L, varianceBandwidth = 900L,
                         bParallelize = FALSE)
 
 
@@ -197,15 +197,15 @@ vY[50000] = 500
 timestamps = seq(34200 , 57600 , length.out = iT)
 StartTime = strptime("1970-01-01 00:00:00.0000", "\%Y-\%m-\%d \%H:\%M:\%OS", tz = "GMT")
 Tradetime = StartTime + timestamps
-testtimes = seq(34200, 57600, 60)
+testTimes = seq(34200, 57600, 60)
 
 
 price = xts(vY, Tradetime)
 
 
-DBHxts = drift_bursts(time = NULL,  log(price), 
-                   testtimes, PreAverage = 5, AcLag = -1L,
-                   Mean_bandwidth = 300L, Variance_bandwidth = 900L, 
+DBHxts = drift_bursts(timestamps = NULL,  log(price), 
+                   testTimes, preAverage = 5, ACLag = -1L,
+                   meanBandwidth = 300L, varianceBandwidth = 900L, 
                    bParallelize = FALSE)
 
 #check for equality

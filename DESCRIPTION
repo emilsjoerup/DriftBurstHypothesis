@@ -13,4 +13,4 @@ Imports: Rcpp (>= 0.12.18), xts, zoo,
 LinkingTo: Rcpp, RcppArmadillo
 Suggests: testthat
 NeedsCompilation: yes
-Packaged: 2019-07-06 19:00:03 UTC; emils
+Packaged: 2019-08-22 14:06:28 UTC; emils

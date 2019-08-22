@@ -3,7 +3,7 @@ plot.DBH = function(x, ...){
   #### Get extra passed options and data
   options = list(...)
   #### List of standard options
-  opt = list(which = "DriftBursts", price = NULL, time = NULL, startTime = 34200, endTime = 57600,
+  opt = list(which = "DriftBursts", price = NULL, timestamps = NULL, startTime = 34200, endTime = 57600,
              xlab = "time", ylab = "value",  leg.x = "topleft", leg.y = NULL, 
              tz = "GMT", annualize = FALSE, nDays = 252)
   #### Override standard options where user passed new options
@@ -25,11 +25,11 @@ plot.DBH = function(x, ...){
   tstat      = getDB(x)
   sigma      = getSigma(x, annualize, nDays) 
   mu         = getMu(x, annualize, nDays)
-  MB         = x$Info$Mean_Bandwidth
-  VB         = x$Info$Variance_Bandwidth
+  MB         = x$Info$meanBandwidth
+  VB         = x$Info$varianceBandwidth
   startpar   = par(no.readonly = TRUE)
   legend.txt = ""
-  testtimes  = seq(startTime, endTime, length.out = length(tstat))
+  testTimes  = seq(startTime, endTime, length.out = length(tstat))
   horizLines = seq(round(min(tstat)), round(max(tstat)), 2)
   ###Setup done
   if(!all(which %in% c("driftbursts", "mu", "sigma", "db"))){
@@ -38,8 +38,8 @@ plot.DBH = function(x, ...){
          Case doesn't matter.")
   }
   if(inherits(tstat, "xts")){
-    testtimes = index(tstat)
-    testtimes = as.numeric(testtimes) - (.indexDate(tstat)[1] * 86400)
+    testTimes = index(tstat)
+    testTimes = as.numeric(testTimes) - (.indexDate(tstat)[1] * 86400)
     tstat     = as.numeric(tstat)
     sigma     = as.numeric(sigma)
     mu        = as.numeric(mu)
@@ -49,7 +49,7 @@ plot.DBH = function(x, ...){
       price = as.numeric(price)
     }
   }
-  xtext = as.POSIXct(testtimes, origin = "1970-01-01", tz = tz)
+  xtext = as.POSIXct(testTimes, origin = "1970-01-01", tz = tz)
   if(all(which %in% c("driftbursts", "db"))){ #use all() because this function should accept which arguments with length longer than 1
     par(mar = c(4,3.5,2,1.25), mgp = c(2,1,0))
     if(!is.null(price)) par(mar = c(4,3.5,4,4), mgp = c(2,1,0)) #makes room for values on the right y-axis
@@ -60,7 +60,7 @@ plot.DBH = function(x, ...){
     legend.txt = "t-stat"
     if(!is.null(price)){
       if(is.null(time)){
-        stop("The timestamps of the price must be passed in the time argument")
+        stop("The timestamps of the price must be passed in the timestamps argument")
       }
       par(new = TRUE)
       plot(price, x = time/86400 , type = "l", axes = FALSE, col = "red", xlab = "", ylab = "", lty = 2)  
@@ -114,7 +114,7 @@ getSigma = function(object, annualize = FALSE, nDays = 252){
 }
 
 getSigma.DBH = function(object, annualize = FALSE, nDays = 252){
-  sigma = object$Sigma * 2 * object$Info$nObs
+  sigma = (object$Sigma * 2 * object$Info$nObs)  / (object$Info$nObs / 23400) 
   if(annualize){sigma = sigma * sqrt(nDays)}
   return(sigma)
 }
@@ -125,7 +125,7 @@ getMu = function(object, annualize = FALSE, nDays = 252){
 }
 
 getMu.DBH = function(object, annualize = FALSE, nDays = 252){
-  mu = object$Mu * object$Info$Mean_bandwidth
+  mu = object$Mu * object$Info$meanBandwidth / (object$Info$nObs / 23400) 
   if(annualize){mu =  mu * sqrt(nDays)}
   return(mu)
 }
