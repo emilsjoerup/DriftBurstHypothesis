@@ -68,4 +68,4 @@ DBH = driftBursts(timestamps, price, testTimes, preAverage = 5, meanBandwidth = 
 plot(DBH, price = price, timestamps = timestamps)
 ```
 
-![Example plot](https://imgur.com/a/RI0S2Pi)
+![Example plot](https://i.imgur.com/m1v3ACN.png)
