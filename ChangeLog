@@ -38,5 +38,5 @@
   *Don't start loop at first test time, instead make it explicit in the documentation that the first test is not calculated and should be used to designate the start of the trading day.
   *Add tests for the examples given.
 2019-08-22 Emil Sjoerup <emilsjoerup@live.dk>
-  *Change to camelCase where applicable
+  *Change to camelCase
   *getMu and getSigma now corrects for nObs

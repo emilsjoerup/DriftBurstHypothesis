@@ -1,6 +1,6 @@
-drift_bursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 57600, 60),
+driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 57600, 60),
                         preAverage = 5, ACLag = -1L, meanBandwidth = 300L, 
-                        varianceBandwidth = 900L, bParallelize = FALSE, iCores = NA, warnings = TRUE){
+                        varianceBandwidth = 900L, parallelize = FALSE, nCores = NA, warnings = TRUE){
 
   #########  Initialization  ############
   k                    = preAverage 
@@ -41,8 +41,8 @@ drift_bursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 576
   if((length(timestamps) != length(logPrices) & !is.null(timestamps))){
     stop("timestamps and logPrices input not of same length, to prevent crashing this is not allowed.")
   }
-  if((is.na(iCores) | iCores %% 1 != 0) & bParallelize){
-    warning("No iCores argument was provided, or the provided iCores argument is not an integer.\n
+  if((is.na(nCores) | nCores %% 1 != 0) & parallelize){
+    warning("No iCores argument was provided, or the provided nCores argument is not an integer.\n
           Sequential evaluation is used.")
     bParallelize = FALSE
   }
@@ -83,9 +83,9 @@ drift_bursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 576
 
   vpreAveraged[(k*2 - 1):(iT - 1)] = filter(x = logPrices, c(rep(1,k),rep( -1,k)))[k:(iT - k)] #Preaveraging
   
-  if(bParallelize & !is.na(iCores)){ #Parallel evaluation or not?
+  if(parallelize & !is.na(nCores)){ #Parallel evaluation or not?
    lDriftBursts = DriftBurstLoopCPAR(c(0,vpreAveraged), c(0,vX), timestamps, testTimes, meanBandwidth, 
-                                     varianceBandwidth, preAverage, ACLag, iCores )
+                                     varianceBandwidth, preAverage, ACLag, nCores )
   }
   else{
    lDriftBursts = DriftBurstLoopC(c(0,vpreAveraged), c(0,vX), timestamps, testTimes, meanBandwidth, 
@@ -109,7 +109,7 @@ drift_bursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 576
   }
   
   lInfo = list("varianceBandwidth" = varianceBandwidth, "meanBandwidth" = meanBandwidth,"preAverage" = preAverage,
-               "nObs" = iT)
+               "nObs" = iT, "testTimes" = testTimes)
   lDriftBursts[["Info"]] = lInfo
   #replace NANs with 0's
   NANS = is.nan(lDriftBursts[["Sigma"]])
@@ -118,4 +118,12 @@ drift_bursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 576
   
   class(lDriftBursts) = c("DBH", "list")
   return(lDriftBursts)
+}
+
+drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60),
+                        PreAverage = 5, AcLag = -1L, Mean_bandwidth = 300L, 
+                        Variance_bandwidth = 900L, bParallelize = FALSE, iCores = NA, warnings = TRUE){
+  .Deprecated("driftBursts", msg = "This package has moved to camelCase, drift_bursts have been renamed to driftBursts and arguments have been renamed")
+  return(driftBursts(time, logprices, testtimes, PreAverage, AcLag, Mean_bandwidth, Variance_bandwidth,
+                     bParallelize, iCores, warnings))
 }
