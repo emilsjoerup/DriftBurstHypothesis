@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
 # DriftBurstHypothesis
 
 An R-package for the calculation of the Drift Burst Hypothesis test-statistic from the working paper Christensen, Oomen and Reno (2018) <DOI:10.2139/ssrn.2842535>.
@@ -34,8 +39,8 @@ is a smooth kernel defined on the positive real numbers, ![equation](https://lat
 
 
 
-## Examples using simulated high frequency data:
-```
+## Examples using simulated data:
+```R
 library(highfrequency)
 library(xts)
 library(DriftBurstHypothesis)
@@ -44,9 +49,7 @@ price = xts(as.numeric(sample_tdata$PRICE), index(sample_tdata))
 plot(price)
 testtimes = seq(34200, 57600, 60)
 
-
-
-DBHxts = drift_bursts(timestamps = NULL,  logpricexts,
+DBHxts = driftBursts(timestamps = NULL,  logpricexts,
                       testTimes, preAverage = 5, ACLag = -1L,
                       meanBandwidth = 300L, varianceBandwidth = 900L,
                       bParallelize = TRUE, iCores = 8)
@@ -54,10 +57,13 @@ DBHxts = drift_bursts(timestamps = NULL,  logpricexts,
 plot(DBHxts, price = price)
 ```
 
+In the plot below it can be seen that the test statistic is unstable until `max(meanBandwidth, varianceBandwidth)` has passed.
+
+
 ![Example plot](https://i.imgur.com/LTWi7uM.png)
 
 
-```
+```R
 library(DriftBurstHypothesis)
 set.seed(1234)
 returns = rnorm(23399, sd = 1)/sqrt(23400)
@@ -65,7 +71,22 @@ price = c(0,cumsum(returns))
 timestamps = seq(34200, 57600, length.out = 23400)
 testTimes = c(34200,seq(34200 + 5*300, 57600, 60))
 DBH = driftBursts(timestamps, price, testTimes, preAverage = 5, meanBandwidth = 300, varianceBandwidth = 5*300)
+
+```
+Getting the mean of volatility:
+```R
+mean(getSigma(DBH)[-1])
+```
+Gives the result:
+```R
+[1] 0.9405581
+```
+We remove the first entry since no testing is done at the first entry (see docs).
+
+
+```R
 plot(DBH, price = price, timestamps = timestamps)
 ```
+Here, no testing is done before the instability period is over. The price is still plotted from the start of the trading day.
 
 ![Example plot](https://i.imgur.com/m1v3ACN.png)
