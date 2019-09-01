@@ -47,7 +47,7 @@ testtimes = seq(34200, 57600, 60)
 DBHxts = driftBursts(timestamps = NULL,  logpricexts,
                       testTimes, preAverage = 5, ACLag = -1L,
                       meanBandwidth = 300L, varianceBandwidth = 900L,
-                      bParallelize = TRUE, iCores = 8)
+                      parallelize = TRUE, nCores = 8)
 
 plot(DBHxts, price = price)
 ```
