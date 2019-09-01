@@ -108,7 +108,7 @@ test_that("DBH Examples check",{
   
   
   ################## same example with xts object:
-  library("xts")
+  suppressPackageStartupMessages(library("xts"))
   #Set parameter values of the simulation
   iT = 66500; dSigma = 0.3; dPhi = 0.98; dMu = -10;
   #set seed for reproducibility

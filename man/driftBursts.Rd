@@ -12,7 +12,7 @@ Calculates the Test-Statistic for the Drift Burst Hypothesis.
 \usage{
 driftBursts(timestamps = NULL, logPrices, testTimes = seq(34200, 57600, 60),
                         preAverage = 5, ACLag = -1L, meanBandwidth = 300L, 
-                        varianceBandwidth = 900L, parallelize = FALSE,
+                        varianceBandwidth = 900L, realTime = FALSE, parallelize = FALSE,
                         nCores = NA, warnings = TRUE)
 }
 
@@ -42,6 +42,9 @@ An \code{integer} denoting the bandwidth for the left-sided exponential kernel f
   \item{varianceBandwidth}{
 An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the variance.
 }
+  \item{realTime}{
+A \code{logical} denoting whether to use a real-time implementation. See details.
+  }
   \item{parallelize}{
 A \code{Boolean} to determine whether to parallelize the underlying C++ code. (Using OpenMP)
 }
@@ -67,6 +70,10 @@ Note that using an \code{xts} argument is slower than using a \code{numeric} and
 
 
 The lags from the Newey-West algorithm is increased by 2 * (preAveage-1) as due to the pre-averaging we know atleast this many lags should be corrected for due to the auto-correlation. The maximum of 20 lags is also increased by this same factor for the same reason.
+
+
+RE: \code{realTime}: Using the 'normal' 
+
 
 
 }

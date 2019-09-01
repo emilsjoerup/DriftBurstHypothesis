@@ -1,12 +1,12 @@
 driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 57600, 60),
-                        preAverage = 5, ACLag = -1L, meanBandwidth = 300L, 
-                        varianceBandwidth = 900L, parallelize = FALSE, nCores = NA, warnings = TRUE){
+                       preAverage = 5, ACLag = -1L, meanBandwidth = 300L, 
+                       varianceBandwidth = 900L, realTime = FALSE,
+                       parallelize = FALSE, nCores = NA, warnings = TRUE){
 
   #########  Initialization  ############
   k                    = preAverage 
   vX                   = diff(logPrices)
   iT                   = length(logPrices)
-  vpreAveraged         = rep(0, iT - 1)
   xts                  = FALSE
   pad = removedFromEnd = 0
   #########  init end  ############
@@ -27,13 +27,13 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
     stop("preAverage must be a positive integer. No preaveraging is done when preAverage = 1.")
   }
   if(inherits(logPrices, "xts")){
-    tz        = tzone(logPrices)
+    tz              = tzone(logPrices)
     timestamps      = index(logPrices)
     timestamps      = as.numeric(timestamps) - (.indexDate(logPrices)[1] * 86400)
-    vIndex    = as.POSIXct((.indexDate(logPrices)[1] * 86400) + testTimes, origin = "1970-01-01")
-    logPrices = as.numeric(t(logPrices)) ##need to transpose, otherwise the program will crash.
-    vX        = as.numeric(vX)[-1] ### need to remove first entry because diff() on an xts object produces NA in first entry.
-    xts       = TRUE
+    vIndex          = as.POSIXct((.indexDate(logPrices)[1] * 86400) + testTimes, origin = "1970-01-01")
+    logPrices       = as.numeric(t(logPrices)) ##need to transpose, otherwise the program will crash.
+    vX              = as.numeric(vX)[-1] ### need to remove first entry because diff() on an xts object produces NA in first entry.
+    xts             = TRUE
   }
   if((anyNA(timestamps) & !is.null(timestamps)) | anyNA(logPrices) | anyNA(testTimes)){
     stop("NA's in timestamps, logPrices or testTimes - might cause crashes and are thus disallowed")
@@ -43,12 +43,12 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
   }
   if((is.na(nCores) | nCores %% 1 != 0) & parallelize){
     warning("No iCores argument was provided, or the provided nCores argument is not an integer.\n
-          Sequential evaluation is used.")
-    bParallelize = FALSE
+             Sequential evaluation is used.")
+    parallelize = FALSE
   }
   if(15 <= max(diff(timestamps))/60){
     stop("There is a period of greater than 15 minutes with no trades.\n
-         In my testing this may cause crashes and is thus disallowed")
+          In my testing this may cause crashes and is thus disallowed")
   }
   if(min(timestamps) > min(testTimes[-1])){
     testTimes = testTimes[-2]
@@ -81,17 +81,27 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
   ###Checks end###
   
 
-  vpreAveraged[(k*2 - 1):(iT - 1)] = filter(x = logPrices, c(rep(1,k),rep( -1,k)))[k:(iT - k)] #Preaveraging
-  
-  if(parallelize & !is.na(nCores)){ #Parallel evaluation or not?
-   lDriftBursts = DriftBurstLoopCPAR(c(0,vpreAveraged), c(0,vX), timestamps, testTimes, meanBandwidth, 
-                                     varianceBandwidth, preAverage, ACLag, nCores )
+  if(!realTime){
+    vpreAveraged         = rep(0, iT - 1)
+    vpreAveraged[(k*2 - 1):(iT - 1)] = cfilter(x = logPrices, c(rep(1,k),rep( -1,k)))[k:(iT - k)] #Preaveraging
+    if(parallelize & !is.na(nCores)){ #Parallel evaluation or not?
+      lDriftBursts = DriftBurstLoopCPAR(c(0,vpreAveraged), c(0,vX), timestamps, testTimes, meanBandwidth, 
+                                       varianceBandwidth, preAverage, ACLag, nCores)
+    }else{
+      lDriftBursts = DriftBurstLoopC(c(0,vpreAveraged), c(0,vX), timestamps, testTimes, meanBandwidth, 
+                                    varianceBandwidth, preAverage, ACLag)  
+    }
+  }else{
+    if(parallelize & !is.na(nCores)){ #Parallel evaluation or not?
+      lDriftBursts = DriftBurstRealTimeCPAR(vLogPrices = logPrices, diffedlogprices = c(0,vX), vTime = timestamps, 
+                                            vTesttime = testTimes, iMeanBandwidth = meanBandwidth,
+                                            iVarBandwidth = varianceBandwidth, iPreAverage = k, iAcLag = ACLag, iCores = nCores)
+    } else {
+      lDriftBursts = DriftBurstRealTimeC(vLogPrices = logPrices, diffedlogprices = c(0,vX), vTime = timestamps, 
+                                           vTesttime = testTimes, iMeanBandwidth = meanBandwidth,
+                                           iVarBandwidth = varianceBandwidth, iPreAverage = k, iAcLag = ACLag)
+    }
   }
-  else{
-   lDriftBursts = DriftBurstLoopC(c(0,vpreAveraged), c(0,vX), timestamps, testTimes, meanBandwidth, 
-                                  varianceBandwidth, preAverage, ACLag)  
-  }
-  
   lDriftBursts[["DriftBursts"]][1] = 0 
   lDriftBursts[["Sigma"]][1]       = 0
   lDriftBursts[["Mu"]][1]          = 0

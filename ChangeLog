@@ -40,3 +40,5 @@
 2019-08-22 Emil Sjoerup <emilsjoerup@live.dk>
   *Change to camelCase
   *getMu and getSigma now corrects for nObs
+2019-09-01 Emil Sjoerup <emilsjoerup@live.dk>
+  *Begin immplementing a 'real-time' version of the function.
