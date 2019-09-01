@@ -72,8 +72,7 @@ Note that using an \code{xts} argument is slower than using a \code{numeric} and
 The lags from the Newey-West algorithm is increased by 2 * (preAveage-1) as due to the pre-averaging we know atleast this many lags should be corrected for due to the auto-correlation. The maximum of 20 lags is also increased by this same factor for the same reason.
 
 
-RE: \code{realTime}: Using the 'normal' 
-
+Using \code{realTime = TRUE} will emulate a situation where the information comes into the system at realtime and tests at the times determined by \code{testTimes}. This means pre-averaging the returns at all testing times which means the calculations are slower than the 'normal' test statistic.
 
 
 }

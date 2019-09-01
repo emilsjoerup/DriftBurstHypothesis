@@ -13,7 +13,7 @@
 2019-13-04 Emil Sjoerup <emilsjoerup@live.dk>
   *Update documentation to get ready for CRAN update.
 2019-25-04 Emil Sjoerup <emilsjoerup@live.dk>
-  DESCRIPTION (Version): New version is 0.1.3
+  *DESCRIPTION (Version): New version is 0.1.3
   *Implement tests for function that is prone to cause failures (Automatic Lag Selection Algorithm)
   *Put in safeguard that should prevent crashes. Now, it is not allowed to have more than 15 minutes between trades.
   *Fix bug caused by a misunderstanding when re-reading the paper. The bug was introduced in version 0.1.2 caused too low maximum lags
@@ -41,4 +41,5 @@
   *Change to camelCase
   *getMu and getSigma now corrects for nObs
 2019-09-01 Emil Sjoerup <emilsjoerup@live.dk>
-  *Begin immplementing a 'real-time' version of the function.
+  *DESCRIPTION (Version): New version is 0.2.0
+  *Add realTime argument to driftBursts function
