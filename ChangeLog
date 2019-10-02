@@ -13,7 +13,7 @@
 2019-13-04 Emil Sjoerup <emilsjoerup@live.dk>
   *Update documentation to get ready for CRAN update.
 2019-25-04 Emil Sjoerup <emilsjoerup@live.dk>
-  DESCRIPTION (Version): New version is 0.1.3
+  *DESCRIPTION (Version): New version is 0.1.3
   *Implement tests for function that is prone to cause failures (Automatic Lag Selection Algorithm)
   *Put in safeguard that should prevent crashes. Now, it is not allowed to have more than 15 minutes between trades.
   *Fix bug caused by a misunderstanding when re-reading the paper. The bug was introduced in version 0.1.2 caused too low maximum lags
@@ -37,3 +37,15 @@
   *Bump version number to 0.1.3.1
   *Don't start loop at first test time, instead make it explicit in the documentation that the first test is not calculated and should be used to designate the start of the trading day.
   *Add tests for the examples given.
+2019-08-22 Emil Sjoerup <emilsjoerup@live.dk>
+  *Change to camelCase
+  *getMu and getSigma now corrects for nObs
+2019-09-01 Emil Sjoerup <emilsjoerup@live.dk>
+  *DESCRIPTION (Version): New version is 0.2.0
+  *Add realTime argument to driftBursts function
+2019-10-02 Emil Sjoerup <emilsjoerup@live.dk>
+  *No longer calling -abs(vX) in DBH.cpp as it was always a negative vector and was leftover from before I optimized indexing in that function. -Minor performance gain.
+  *add print.DBH method
+  
+  
+  

@@ -1,8 +1,8 @@
 library(testthat)
 library(DriftBurstHypothesis)
 
-context("DBH C++ test")
-test_that("DBH error codes",{
+context("DBH C++ error tests")
+test_that("DBH C++ error tests",{
   #these functions has broken before, hopefully they won't break again.
   expect_equal(DriftBurstHypothesis:::AsymptoticVarianceC(c(1:3), 3), NaN) 
   expect_equal(DriftBurstHypothesis:::AsymptoticVarianceC(c(1:3), 4), NaN)
@@ -13,7 +13,7 @@ test_that("DBH error codes",{
 context("DBH test")
 test_that("DBH sim test", {
   set.seed(123)
-  iT = 23400; Mean_bandwidth = 300L
+  iT = 23400; meanBandwidth = 300L
   timestamps = seq(0, 23400, length.out = iT+1)
   testtimes  = seq(0, 23400, 60L)
   
@@ -21,10 +21,11 @@ test_that("DBH sim test", {
   p = c(0,cumsum(r))
   
   
-  DBH = drift_bursts(timestamps, p, testtimes, PreAverage = 1, AcLag = -1, 
-                     Mean_bandwidth = Mean_bandwidth, Variance_bandwidth = 5*Mean_bandwidth, bParallelize = FALSE)
-  expect_equal(mean(getMu(DBH)[-1]),0.02516096)
-  expect_equal(mean(getSigma(DBH)[-1]), 0.9629604)
+  DBH = driftBursts(timestamps, p, testtimes, preAverage = 1, ACLag = -1, 
+                     meanBandwidth = meanBandwidth, varianceBandwidth = 5*meanBandwidth, parallelize = FALSE)
+  #The new mu conversion is 1/2*OldMu
+  expect_equal(mean(getMu(DBH)[-1]),0.02515989 / 2)
+  expect_equal(mean(getSigma(DBH)[-1]), 0.9754949)
 })
 
 
@@ -32,7 +33,7 @@ context("Examples check")
 test_that("DBH Examples check",{
   #Simulate from a stochastic volatility model.
   #Both a flash crash and flash rally are coded into the function.
-  StochasticVolatilitySim = function(iT, dSigma, dPhi, dMu){
+  flashCrashSim = function(iT, dSigma, dPhi, dMu){
     vSim = numeric(iT)
     vEps = rnorm(iT , sd =dSigma)
     vEpsy = rnorm(iT)
@@ -67,7 +68,7 @@ test_that("DBH Examples check",{
   #set seed for reproducibility
   set.seed(123)
   #Simulate the series
-  vY = 500+cumsum(StochasticVolatilitySim(iT, dSigma, dPhi, dMu))
+  vY = 500+cumsum(flashCrashSim(iT, dSigma, dPhi, dMu))
   
   #insert an outlier to illustrate robustness.
   vY[50000] = 500
@@ -81,16 +82,16 @@ test_that("DBH Examples check",{
   
   #calculating drift burst hypothesis
   
-  DBH = drift_bursts(timestamps,  logprices,
-                     testtimes, PreAverage = 5, AcLag = -1L,
-                     Mean_bandwidth = 300L, Variance_bandwidth = 900L,
-                     bParallelize = FALSE)
+  DBH = driftBursts(timestamps,  logprices,
+                     testtimes, preAverage = 5, ACLag = -1L,
+                     meanBandwidth = 300L, varianceBandwidth = 900L,
+                     parallelize = FALSE)
   
   
   #plot test statistic
   plot = plot(DBH)
   #plot both test statistic and price
-  plot2 = plot(DBH, price = vY, time = timestamps)
+  plot2 = plot(DBH, price = vY, timestamps = timestamps)
   #Plot the mu series
   plot3 = plot(DBH, which = "Mu")
   #plot the sigma series
@@ -100,21 +101,22 @@ test_that("DBH Examples check",{
   plot5 = plot(DBH, which = c("Mu", "Sigma"))
   
   #Means of the tstat, sigma, and mu series.
-  expect_equal(mean(getDB(DBH)), 0.01859701)
-  expect_equal(mean(getSigma(DBH)), 0.12483728)
-  expect_equal(mean(getMu(DBH)), - 0.001151098)
+  expect_equal(mean(getDB(DBH)[-1]), 0.01864469)
+  expect_equal(mean(getSigma(DBH)[-1]), 0.007200216)
+  #The new mu conversion is 1/2*OldMu
+  expect_equal(mean(getMu(DBH)[-1]), -0.00001624 * 0.5) 
   
   
   
   
   ################## same example with xts object:
-  library("xts")
+  suppressPackageStartupMessages(library("xts"))
   #Set parameter values of the simulation
   iT = 66500; dSigma = 0.3; dPhi = 0.98; dMu = -10;
   #set seed for reproducibility
   set.seed(123)
   #Simulate the series
-  vY = 500+cumsum(StochasticVolatilitySim(iT, dSigma, dPhi, dMu))
+  vY = 500+cumsum(flashCrashSim(iT, dSigma, dPhi, dMu))
   
   #insert an outlier to illustrate robustness.
   vY[50000] = 500
@@ -123,16 +125,16 @@ test_that("DBH Examples check",{
   timestamps = seq(34200 , 57600 , length.out = iT)
   StartTime = strptime("1970-01-01 00:00:00.0000", "%Y-%m-%d %H:%M:%OS", tz = "GMT")
   Tradetime = StartTime + timestamps
-  testtimes = seq(34200, 57600, 60)
+  testTimes = seq(34200, 57600, 60)
   
   
   price = xts(vY, Tradetime)
   
   
-  DBHxts = drift_bursts(time = NULL,  log(price), 
-                        testtimes, PreAverage = 5, AcLag = -1L,
-                        Mean_bandwidth = 300L, Variance_bandwidth = 900L, 
-                        bParallelize = FALSE)
+  DBHxts = driftBursts(timestamps = NULL,  log(price), 
+                       testTimes, preAverage = 5, ACLag = -1L,
+                       meanBandwidth = 300L, varianceBandwidth = 900L, 
+                       parallelize = FALSE)
   plot6 = plot(DBHxts)
   expect_true(all.equal.list(plot, plot6))
   plot7 = plot(DBHxts, price = price)

@@ -34,7 +34,7 @@ is a smooth kernel defined on the positive real numbers, ![equation](https://lat
 
 
 
-## Example:
+## Examples using simulated high frequency data:
 ```
 library(highfrequency)
 library(xts)
@@ -46,12 +46,26 @@ testtimes = seq(34200, 57600, 60)
 
 
 
-DBHxts = drift_bursts(time = NULL,  log(price),
-                      testtimes, PreAverage = 5, AcLag = -1L,
-                      Mean_bandwidth = 300L, Variance_bandwidth = 900L,
+DBHxts = drift_bursts(timestamps = NULL,  logpricexts,
+                      testTimes, preAverage = 5, ACLag = -1L,
+                      meanBandwidth = 300L, varianceBandwidth = 900L,
                       bParallelize = TRUE, iCores = 8)
 
 plot(DBHxts, price = price)
 ```
 
 ![Example plot](https://i.imgur.com/LTWi7uM.png)
+
+
+```
+library(DriftBurstHypothesis)
+set.seed(1234)
+returns = rnorm(23399, sd = 1)/sqrt(23400)
+price = c(0,cumsum(returns))
+timestamps = seq(34200, 57600, length.out = 23400)
+testTimes = c(34200,seq(34200 + 5*300, 57600, 60))
+DBH = driftBursts(timestamps, price, testTimes, preAverage = 5, meanBandwidth = 300, varianceBandwidth = 5*300)
+plot(DBH, price = price, timestamps = timestamps)
+```
+
+![Example plot](https://i.imgur.com/m1v3ACN.png)
