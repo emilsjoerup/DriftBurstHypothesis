@@ -21,15 +21,11 @@ DriftBurstLoopCPAR <- function(vPreAveraged, diffedlogprices, vTime, vTesttime, 
     .Call(`_DriftBurstHypothesis_DriftBurstLoopCPAR`, vPreAveraged, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag, iCores)
 }
 
-DriftBurstRealTimeC <- function(vLogPrices, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag) {
-    .Call(`_DriftBurstHypothesis_DriftBurstRealTimeC`, vLogPrices, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag)
+cfilter <- function(x, filter) {
+    .Call(`_DriftBurstHypothesis_cfilter`, x, filter)
 }
 
-DriftBurstRealTimeCPAR <- function(vLogPrices, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag, iCores) {
-    .Call(`_DriftBurstHypothesis_DriftBurstRealTimeCPAR`, vLogPrices, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag, iCores)
-}
-
-cfilter <- function(x, filter, sides = 2L, circular = FALSE) {
-    .Call(`_DriftBurstHypothesis_cfilter`, x, filter, sides, circular)
+mldivide <- function(A, B) {
+    .Call(`_DriftBurstHypothesis_mldivide`, A, B)
 }
 

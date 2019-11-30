@@ -15,7 +15,7 @@ test_that("DBH sim test", {
   set.seed(123)
   iT = 23400; meanBandwidth = 300L
   timestamps = seq(0, 23400, length.out = iT+1)
-  testtimes  = seq(0, 23400, 60L)
+  testtimes  = seq(60, 23400, 60L)
   
   r = rnorm(iT, mean = 0.02, sd = 1)/sqrt(iT)
   p = c(0,cumsum(r))
@@ -24,14 +24,13 @@ test_that("DBH sim test", {
   DBH = driftBursts(timestamps, p, testtimes, preAverage = 1, ACLag = -1, 
                      meanBandwidth = meanBandwidth, varianceBandwidth = 5*meanBandwidth, parallelize = FALSE)
   #The new mu conversion is 1/2*OldMu
-  expect_equal(mean(getMu(DBH)[-1]),0.02515989 / 2)
-  expect_equal(mean(getSigma(DBH)[-1]), 0.9754949)
+  expect_equal(mean(getMu(DBH)),0.01253808)
+  expect_equal(mean(getSigma(DBH)), 0.9748568)
 })
 
 
 context("Examples check")
 test_that("DBH Examples check",{
-  #Simulate from a stochastic volatility model.
   #Both a flash crash and flash rally are coded into the function.
   flashCrashSim = function(iT, dSigma, dPhi, dMu){
     vSim = numeric(iT)
@@ -75,7 +74,7 @@ test_that("DBH Examples check",{
   
   #Here, the observations are equidistant, but the code can handle unevenly spaced observations.
   timestamps = seq(34200 , 57600 , length.out = iT)
-  testtimes = seq(34200, 57600, 60)
+  testtimes = seq(34260, 57600, 60)
   logprices = log(vY)
   
   library("DriftBurstHypothesis")
@@ -101,10 +100,9 @@ test_that("DBH Examples check",{
   plot5 = plot(DBH, which = c("Mu", "Sigma"))
   
   #Means of the tstat, sigma, and mu series.
-  expect_equal(mean(getDB(DBH)[-1]), 0.01864469)
-  expect_equal(mean(getSigma(DBH)[-1]), 0.007200216)
-  #The new mu conversion is 1/2*OldMu
-  expect_equal(mean(getMu(DBH)[-1]), -0.00001624 * 0.5) 
+  expect_equal(mean(getDB(DBH)), 0.01863012)
+  expect_equal(mean(getSigma(DBH)), 0.007197401)
+  expect_equal(mean(getMu(DBH)), -0.000008112) 
   
   
   
@@ -125,7 +123,7 @@ test_that("DBH Examples check",{
   timestamps = seq(34200 , 57600 , length.out = iT)
   StartTime = strptime("1970-01-01 00:00:00.0000", "%Y-%m-%d %H:%M:%OS", tz = "GMT")
   Tradetime = StartTime + timestamps
-  testTimes = seq(34200, 57600, 60)
+  testTimes = seq(34260, 57600, 60)
   
   
   price = xts(vY, Tradetime)

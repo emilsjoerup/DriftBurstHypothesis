@@ -1,7 +1,6 @@
-driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 57600, 60),
+driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34260, 57600, 60),
                        preAverage = 5, ACLag = -1L, meanBandwidth = 300L, 
-                       varianceBandwidth = 900L, realTime = FALSE,
-                       parallelize = FALSE, nCores = NA, warnings = TRUE){
+                       varianceBandwidth = 900L, parallelize = FALSE, nCores = NA, warnings = TRUE){
 
   #########  Initialization  ############
   k                    = preAverage 
@@ -9,7 +8,7 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
   iT                   = length(logPrices)
   xts                  = FALSE
   pad = removedFromEnd = 0
-  tt                   = testTimes #For returning when we have to pad.
+  tt                   = testTimes #tt is returned in the Info list. 
   #########  init end  ############
   
   ###Checks###
@@ -20,7 +19,7 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
     stop("varianceBandwidth must be a positive integer")
   }
   if(ACLag !=-1 && ACLag%%1!=0 | -1>ACLag | ACLag == 1){
-    stop("ACLag must be a positive integer greater than or equal to 1, or -1. \n
+    stop("ACLag must be a positive integer greater than 1, or -1. \n
          The standard of -1 designates usage of an automated lag selection algorithm.")
     #Specifically Newey-West 1994
   }
@@ -31,8 +30,9 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
     tz              = tzone(logPrices)
     timestamps      = index(logPrices)
     timestamps      = as.numeric(timestamps) - (.indexDate(logPrices)[1] * 86400)
-    vIndex          = as.POSIXct((.indexDate(logPrices)[1] * 86400) + testTimes, origin = "1970-01-01")
-    logPrices       = as.numeric(t(logPrices)) ##need to transpose, otherwise the program will crash.
+    vIndex          = as.POSIXct((.indexDate(logPrices)[1] * 86400) + testTimes, origin = "1970-01-01", tz = tz)
+    logPrices       = as.numeric(logPrices)
+    #logPrices       = as.numeric(t(logPrices)) ##need to transpose, otherwise the program will crash.
     vX              = as.numeric(vX)[-1] ### need to remove first entry because diff() on an xts object produces NA in first entry.
     xts             = TRUE
   }
@@ -49,27 +49,17 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
   }
     parallelize = FALSE
   }
-  if(15 <= max(diff(timestamps))/60){
-    stop("There is a period of greater than 15 minutes with no trades.\n
-          This causes fatal errors (and crashes if paralellized) and is thus disallowed")
-  }
-  if(min(timestamps) > min(testTimes[-1]) | sum(testTimes[2]>timestamps) <= 2*k){
-    testTimes = testTimes[-2]
+  if(min(timestamps) >= min(testTimes)){
+    testTimes = testTimes[-1]
     pad = 1
-    while(min(timestamps) > min(testTimes[-1]) | sum(testTimes[2]>timestamps) <= 2*k){
-      testTimes = testTimes[-2] 
+    while(min(timestamps) > min(testTimes)){
+      testTimes = testTimes[-1] 
       pad = pad + 1
     }
     if(warnings){
-      if(!realTime){
-    warning(paste("\nThe first testing timestamps is before any observations. This causes fatal errors (and crashes if paralellized).",
-                  "\nItereatively removing first testing timestamps until this is no longer the case.",
-                  "\nRemoved the first", pad, "entries from testTimes and replacing with a 0\n"))
-      } else {
-    warning(paste("\nThe first testing timestamps is before enough observations to do the first pre-averaging. This causes crashes (and crashes if paralellized).",
-                  "\nItereatively removing first testing timestamps until this is no longer the case.",
-                  "\nRemoved the first", pad, "entries from testTimes and replacing with a 0\n"))
-        }
+      warning(paste("\nThe first testing timestamps is before any observations. This causes fatal errors (and crashes if paralellized).",
+                    "\nItereatively removing first testing timestamps until this is no longer the case.",
+                    "\nRemoved the first", pad, "entries from testTimes and replacing with a 0\n"))
     }
   }
   if(max(testTimes)>max(timestamps) + 900){
@@ -87,33 +77,24 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
     }
     
   }
+  if(15 <= max(diff(timestamps))/60){
+    stop("There is a period of greater than 15 minutes with no trades.\n
+          This causes fatal errors (and crashes if paralellized) and is thus disallowed")
+  }
   ###Checks end###
   
-  if(!realTime){
-    vpreAveraged         = rep(0, iT - 1)
-    vpreAveraged[(k*2 - 1):(iT - 1)] = cfilter(x = logPrices, c(rep(1,k),rep( -1,k)))[k:(iT - k)]
-    if(parallelize & !is.na(nCores)){ #Parallel evaluation or not?
-      lDriftBursts = DriftBurstLoopCPAR(c(0,vpreAveraged), c(0,vX), timestamps, testTimes, meanBandwidth, 
-                                       varianceBandwidth, preAverage, ACLag, nCores)
-    }else{
-      lDriftBursts = DriftBurstLoopC(c(0,vpreAveraged), c(0,vX), timestamps, testTimes, meanBandwidth, 
-                                    varianceBandwidth, preAverage, ACLag)  
-    }
+
+  vpreAveraged         = rep(0, iT - 1)
+  vpreAveraged[(k*2 - 1):(iT - 1)] = cfilter(x = logPrices, c(rep(1,k),rep( -1,k)))[k:(iT - k)]
+  if(parallelize & !is.na(nCores)){ #Parallel evaluation or not?
+    lDriftBursts = DriftBurstLoopCPAR(vpreAveraged, vX, timestamps, testTimes, meanBandwidth, 
+                                     varianceBandwidth, preAverage, ACLag, nCores)
   }else{
-    if(parallelize & !is.na(nCores)){ #Parallel evaluation or not?
-      lDriftBursts = DriftBurstRealTimeCPAR(vLogPrices = logPrices, diffedlogprices = c(0,vX), vTime = timestamps, 
-                                            vTesttime = testTimes, iMeanBandwidth = meanBandwidth,
-                                            iVarBandwidth = varianceBandwidth, iPreAverage = k, iAcLag = ACLag, iCores = nCores)
-    } else {
-      lDriftBursts = DriftBurstRealTimeC(vLogPrices = logPrices, diffedlogprices = c(0,vX), vTime = timestamps, 
-                                           vTesttime = testTimes, iMeanBandwidth = meanBandwidth,
-                                           iVarBandwidth = varianceBandwidth, iPreAverage = k, iAcLag = ACLag)
-    }
+    lDriftBursts = DriftBurstLoopC(vpreAveraged, vX, timestamps, testTimes, meanBandwidth, 
+                                  varianceBandwidth, preAverage, ACLag)  
   }
-  lDriftBursts[["driftBursts"]][1] = 0 
-  lDriftBursts[["sigma"]][1]       = 0
-  lDriftBursts[["mu"]][1]          = 0
-  
+
+
   if(pad != 0 | removedFromEnd != 0){
     lDriftBursts[["driftBursts"]] = c(rep(0,pad), lDriftBursts[["driftBursts"]], rep(0,removedFromEnd))
     lDriftBursts[["sigma"]]       = c(rep(0,pad), lDriftBursts[["sigma"]], rep(0,removedFromEnd))
@@ -127,8 +108,8 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
   }
   
   lInfo = list("varianceBandwidth" = varianceBandwidth, "meanBandwidth" = meanBandwidth,"preAverage" = preAverage,
-               "nObs" = iT, "testTimes" = tt)
-  lDriftBursts[["Info"]] = lInfo
+               "nObs" = iT, "testTimes" = tt, "padding" = c(pad, removedFromEnd))
+  lDriftBursts[["info"]] = lInfo
   #replace NANs with 0's
   NANS = is.nan(lDriftBursts[["sigma"]])
   lDriftBursts[["driftBursts"]][NANS] = 0
@@ -136,12 +117,4 @@ driftBursts = function(timestamps = NULL, logPrices, testTimes = seq(34200, 5760
   
   class(lDriftBursts) = c("DBH", "list")
   return(lDriftBursts)
-}
-
-drift_bursts = function(time = NULL, logprices, testtimes = seq(34200, 57600, 60),
-                        PreAverage = 5, AcLag = -1L, Mean_bandwidth = 300L, 
-                        Variance_bandwidth = 900L, bParallelize = FALSE, iCores = NA, warnings = TRUE){
-  .Deprecated("driftBursts", msg = "This package has moved to camelCase, drift_bursts have been renamed to driftBursts and arguments have been renamed")
-  return(driftBursts(time, logprices, testtimes, PreAverage, AcLag, Mean_bandwidth, Variance_bandwidth,
-                     bParallelize, iCores, warnings))
 }

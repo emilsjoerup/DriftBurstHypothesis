@@ -30,7 +30,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // AutomaticLagSelectionC
-int AutomaticLagSelectionC(arma::vec vX, double dMu);
+double AutomaticLagSelectionC(arma::vec vX, double dMu);
 RcppExport SEXP _DriftBurstHypothesis_AutomaticLagSelectionC(SEXP vXSEXP, SEXP dMuSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -78,54 +78,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// DriftBurstRealTimeC
-Rcpp::List DriftBurstRealTimeC(arma::vec vLogPrices, arma::vec diffedlogprices, arma::vec vTime, arma::vec vTesttime, double iMeanBandwidth, double iVarBandwidth, int iPreAverage, int iAcLag);
-RcppExport SEXP _DriftBurstHypothesis_DriftBurstRealTimeC(SEXP vLogPricesSEXP, SEXP diffedlogpricesSEXP, SEXP vTimeSEXP, SEXP vTesttimeSEXP, SEXP iMeanBandwidthSEXP, SEXP iVarBandwidthSEXP, SEXP iPreAverageSEXP, SEXP iAcLagSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type vLogPrices(vLogPricesSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type diffedlogprices(diffedlogpricesSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type vTime(vTimeSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type vTesttime(vTesttimeSEXP);
-    Rcpp::traits::input_parameter< double >::type iMeanBandwidth(iMeanBandwidthSEXP);
-    Rcpp::traits::input_parameter< double >::type iVarBandwidth(iVarBandwidthSEXP);
-    Rcpp::traits::input_parameter< int >::type iPreAverage(iPreAverageSEXP);
-    Rcpp::traits::input_parameter< int >::type iAcLag(iAcLagSEXP);
-    rcpp_result_gen = Rcpp::wrap(DriftBurstRealTimeC(vLogPrices, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag));
-    return rcpp_result_gen;
-END_RCPP
-}
-// DriftBurstRealTimeCPAR
-Rcpp::List DriftBurstRealTimeCPAR(arma::vec vLogPrices, arma::vec diffedlogprices, arma::vec vTime, arma::vec vTesttime, double iMeanBandwidth, double iVarBandwidth, int iPreAverage, int iAcLag, int iCores);
-RcppExport SEXP _DriftBurstHypothesis_DriftBurstRealTimeCPAR(SEXP vLogPricesSEXP, SEXP diffedlogpricesSEXP, SEXP vTimeSEXP, SEXP vTesttimeSEXP, SEXP iMeanBandwidthSEXP, SEXP iVarBandwidthSEXP, SEXP iPreAverageSEXP, SEXP iAcLagSEXP, SEXP iCoresSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type vLogPrices(vLogPricesSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type diffedlogprices(diffedlogpricesSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type vTime(vTimeSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type vTesttime(vTesttimeSEXP);
-    Rcpp::traits::input_parameter< double >::type iMeanBandwidth(iMeanBandwidthSEXP);
-    Rcpp::traits::input_parameter< double >::type iVarBandwidth(iVarBandwidthSEXP);
-    Rcpp::traits::input_parameter< int >::type iPreAverage(iPreAverageSEXP);
-    Rcpp::traits::input_parameter< int >::type iAcLag(iAcLagSEXP);
-    Rcpp::traits::input_parameter< int >::type iCores(iCoresSEXP);
-    rcpp_result_gen = Rcpp::wrap(DriftBurstRealTimeCPAR(vLogPrices, diffedlogprices, vTime, vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag, iCores));
-    return rcpp_result_gen;
-END_RCPP
-}
 // cfilter
-arma::vec cfilter(arma::vec x, arma::vec filter, int sides, bool circular);
-RcppExport SEXP _DriftBurstHypothesis_cfilter(SEXP xSEXP, SEXP filterSEXP, SEXP sidesSEXP, SEXP circularSEXP) {
+arma::vec cfilter(arma::vec x, arma::vec filter);
+RcppExport SEXP _DriftBurstHypothesis_cfilter(SEXP xSEXP, SEXP filterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type filter(filterSEXP);
-    Rcpp::traits::input_parameter< int >::type sides(sidesSEXP);
-    Rcpp::traits::input_parameter< bool >::type circular(circularSEXP);
-    rcpp_result_gen = Rcpp::wrap(cfilter(x, filter, sides, circular));
+    rcpp_result_gen = Rcpp::wrap(cfilter(x, filter));
+    return rcpp_result_gen;
+END_RCPP
+}
+// mldivide
+arma::vec mldivide(arma::mat A, arma::vec B);
+RcppExport SEXP _DriftBurstHypothesis_mldivide(SEXP ASEXP, SEXP BSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type B(BSEXP);
+    rcpp_result_gen = Rcpp::wrap(mldivide(A, B));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -136,9 +109,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_DriftBurstHypothesis_AutomaticLagSelectionC", (DL_FUNC) &_DriftBurstHypothesis_AutomaticLagSelectionC, 2},
     {"_DriftBurstHypothesis_DriftBurstLoopC", (DL_FUNC) &_DriftBurstHypothesis_DriftBurstLoopC, 8},
     {"_DriftBurstHypothesis_DriftBurstLoopCPAR", (DL_FUNC) &_DriftBurstHypothesis_DriftBurstLoopCPAR, 9},
-    {"_DriftBurstHypothesis_DriftBurstRealTimeC", (DL_FUNC) &_DriftBurstHypothesis_DriftBurstRealTimeC, 8},
-    {"_DriftBurstHypothesis_DriftBurstRealTimeCPAR", (DL_FUNC) &_DriftBurstHypothesis_DriftBurstRealTimeCPAR, 9},
-    {"_DriftBurstHypothesis_cfilter", (DL_FUNC) &_DriftBurstHypothesis_cfilter, 4},
+    {"_DriftBurstHypothesis_cfilter", (DL_FUNC) &_DriftBurstHypothesis_cfilter, 2},
+    {"_DriftBurstHypothesis_mldivide", (DL_FUNC) &_DriftBurstHypothesis_mldivide, 2},
     {NULL, NULL, 0}
 };
 

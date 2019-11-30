@@ -46,6 +46,18 @@
 2019-10-02 Emil Sjoerup <emilsjoerup@live.dk>
   *No longer calling -abs(vX) in DBH.cpp as it was always a negative vector and was leftover from before I optimized indexing in that function. -Minor performance gain.
   *add print.DBH method
-  
-  
-  
+2019-10-06 Emil Sjoerup <emilsjoerup@live.dk>
+  *DESCRIPTION (Version): New version is 0.2.0.1
+  *Add .0 to 2.0 in floor(iLag/2) to floor(iLag/2.0) in order to avoid integer arguments in floor() which causes installation errors on Solaris
+2019-10-27 Emil Sjoerup <emilsjoerup@live.dk>
+  *Remove surperfluous code form the cfilter function - extra unused arguments were included, which have been removed.
+  *Add padding vector to the output of driftBursts function, which is used for the new mean and variance methods of the new classes for the 3 estimates
+  *Add methods for calculating mean and variance of the output of driftBursts
+  *Re-organize the documentation to have a file for the methods of the DBH class.
+2019-10-29 Emil Sjoerup <emilsjoerup@live.dk>
+  *DESCRIPTION (Version): New version is 0.3.0 
+  *In driftBursts, the testTimes argument should no longer have an entry denoting the start of the trading day, as now testing is done on all entries.
+2019-11-23 Emil Sjoerup <emilsjoerup@live.dk>
+  *Port over the routine for testing whether a flash crash is present from Matlab. 
+2019-11-28 Emil Sjoerup <emilsjoerup@live.dk>
+  *remove realTime feature, which was a bug mistaken as a feature :)

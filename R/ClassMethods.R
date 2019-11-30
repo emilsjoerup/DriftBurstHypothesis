@@ -26,10 +26,8 @@ plot.DBH = function(x, ...){
   tstat      = getDB(x)
   sigma      = getSigma(x, annualize, nDays) 
   mu         = getMu(x, annualize, nDays)
-  MB         = x$Info$meanBandwidth
-  VB         = x$Info$varianceBandwidth
   startpar   = par(no.readonly = TRUE)
-  testTimes  = x$Info$testTimes
+  testTimes  = x$info$testTimes
   horizLines = seq(round(min(tstat)), round(max(tstat)), 1)
   ###Setup done
   if(!all(which %in% c("driftbursts", "mu", "sigma", "db"))){
@@ -44,7 +42,8 @@ plot.DBH = function(x, ...){
     sigma     = as.numeric(sigma)
     mu        = as.numeric(mu)
     if(!is.null(price)){
-      timestamps  = index(price)
+      tz          = tzone(price)
+      timestamps  = index(price, tz = tz)
       timestamps  = as.numeric(timestamps) - (.indexDate(price)[1] * 86400)
       price       = as.numeric(price)
     }
@@ -54,6 +53,11 @@ plot.DBH = function(x, ...){
     sigma = sigma[-1]
     mu = mu[-1]
     tstat=tstat[-1]
+  }
+  if(min(testTimes) < startTime | max(testTimes) > endTime){
+    cat('\nTesting was tried before startTime or after endTime, thus some of the tests may be cut off from the plot.
+        \nIf the plot looks weird, consider changing startTime and endTime. 
+        \nThese should reflect the start of trading and the end of trading respectively')
   }
   xtext = as.POSIXct(testTimes, origin = "1970-01-01", tz = tz)
   xlim = c(startTime, endTime)
@@ -121,49 +125,141 @@ plot.DBH = function(x, ...){
 }
 
 print.DBH = function(x, ...){
+  usePolynomialInterpolation = TRUE
   options = list(...)
+  if('criticalValue' %in% names(options)){
+    usePolynomialInterpolation = FALSE
+  }
   #### List of standard options
-  opt = list(annualize = FALSE, nDays = 252)
+  opt = list(alpha = 0.95)
   #### Override standard options where user passed new options
   opt[names(options)] = options
+  if(usePolynomialInterpolation){
+    alpha = opt$alpha
+    criticalValue = isDriftBurst(getDB(x), alpha)$quantile  
+  }else{
+    criticalValue = opt$criticalValue
+  }
   
-  annualize = opt$annualize
-  nDays     = opt$nDays
-  
-  cat("\nMean mu:                   ", mean(getMu(x, annualize, nDays)[-1]))
-  cat("\nMean sigma:                ", mean(getSigma(x, annualize, nDays)[-1]))
-  cat("\nMean test statistic:       ", mean(getDB(x)[-1]))
-  cat("\nVariance of test statistic:", var(getDB(x)[-1]))
+  varDB = getVar(x, which = 'db')
+  padding = x$info$padding
+  #We always remove the first entry, as this is used to denote the start of trading.
+  whichToInclude = seq(padding[1] + 1, length(x$info$testTimes)- padding[2]) 
+  allMeans = getMean(x, which = 'all')
+  cat("\n-------------Drift Burst Hypothesis------------\n")
+  cat("Tests performed:                     ", length(whichToInclude))
+  #browser()
+  if(usePolynomialInterpolation){
+    cat("\nAny drift bursts (|T| > ",paste0(round(criticalValue,3)),"):    ", ifelse(any(abs(getDB(x))>criticalValue) , 'yes', 'no'))
+  }else{
+    cat("\nAny drift bursts (|T| > ",paste0(criticalValue[1]),"):        ", ifelse(any(abs(getDB(x))>criticalValue) , 'yes', 'no'))
+  }
+  cat("\nMax absolute value of test statistic:", round(max(abs(getDB(x))), digits=5))
+  cat("\nMean test statistic:                 ", round(allMeans$meanDB, digits = 5))
+  cat("\nVariance of test statistic:          ", round(varDB, digits = 5))
+  cat("\nMean mu:                             ", round(allMeans$meanMu, digits = 5))
+  cat("\nMean sigma:                          ", round(allMeans$meanSigma, digits = 5))
+  cat("\n-----------------------------------------------\n")
 }
 
-getDB = function(object){
-  UseMethod("getDB", object)
+getDB = function(x){
+  UseMethod("getDB", x)
 }
 
-getDB.DBH = function(object){
-  DB = object$driftBursts
+getDB.DBH = function(x){
+  DB = x$driftBursts
   return(DB)
 }
 
 
-getSigma = function(object, annualize = FALSE, nDays = 252){
-  UseMethod("getSigma", object)
+getSigma = function(x, annualize = FALSE, nDays = 252){
+  UseMethod("getSigma", x)
 }
 
-getSigma.DBH = function(object, annualize = FALSE, nDays = 252){
-  sigma = sqrt((object$sigma * 2 * object$Info$nObs)  / (object$Info$nObs / 23400))/(object$Info$preAverage^2)
+getSigma.DBH = function(x, annualize = FALSE, nDays = 252){
+  sigma = sqrt((x$sigma * 2 * x$info$nObs)  / (x$info$nObs / 23400))/(x$info$preAverage^2)
   if(annualize){sigma = sigma * sqrt(nDays)}
   return(sigma)
 }
 
 
-getMu = function(object, annualize = FALSE, nDays = 252){
-  UseMethod("getMu", object)
+getMu = function(x, annualize = FALSE, nDays = 252){
+  UseMethod("getMu", x)
 }
 
-getMu.DBH = function(object, annualize = FALSE, nDays = 252){
-  mu = (object$mu * object$Info$meanBandwidth / (object$Info$nObs / 23400)) / (object$Info$preAverage^2 * 2)
+getMu.DBH = function(x, annualize = FALSE, nDays = 252){
+  mu = (x$mu * x$info$meanBandwidth / (x$info$nObs / 23400)) / (x$info$preAverage^2 * 2)
   if(annualize){mu =  mu * nDays}
   return(mu)
 }
 
+getMean = function(x, which = 'all'){
+  UseMethod('getMean', x)
+}
+
+getMean.DBH = function(x, which = 'all'){
+  which     = tolower(which)
+  padding = x$info$padding
+  if(!(which %in% c('all', 'db', 'driftbursts', 'mu', 'sigma'))){
+    stop("The which argument must be a character vector containing either:\n
+         Sigma, Mu, both of these or DriftBursts. 
+         CasE doesn't matter.")
+  }
+  #We always remove the first entry, as this is used to denote the start of trading.
+  whichToInclude = seq(padding[1] + 1, length(x$info$testTimes)- padding[2]) 
+  
+  if(which == 'all'){
+    meanDB = mean(getDB(x)[whichToInclude])
+    meanMu = mean(getMu(x)[whichToInclude])
+    meanSigma = mean(getSigma(x)[whichToInclude])  
+    out = list('meanDB' = meanDB, 'meanMu' = meanMu, 'meanSigma' = meanSigma)
+  }
+  if(which %in% c('driftbursts', 'db')){
+    out = mean(getDB(x)[whichToInclude])
+  }
+  if(which == 'mu'){
+    out = mean(getMu(x)[whichToInclude])
+  }
+  if(which == 'sigma'){
+    out = mean(getSigma(x)[whichToInclude])
+  }
+  
+  return(out)
+  
+}
+
+
+getVar = function(x, which = 'all', annualize = FALSE, nDays = 252){
+  UseMethod('getVar', x)
+}
+
+
+getVar.DBH = function(x, which = 'all', annualize = FALSE, nDays = 252){
+  which     = tolower(which)
+  padding = x$info$padding
+  if(!(which %in% c('all', 'db', 'driftbursts', 'mu', 'sigma'))){
+    stop("The which argument must be a character vector containing either:\n
+         Sigma, Mu, both of these or DriftBursts. 
+         CasE doesn't matter.")
+  }
+  #We always remove the first entry, as this is used to denote the start of trading.
+  whichToInclude = seq(padding[1] + 1, length(x$info$testTimes)- padding[2]) 
+  if(which == 'all'){
+    varDB = var(getDB(x)[whichToInclude])
+    varMu = var(getMu(x, annualize, nDays)[whichToInclude])
+    varSigma = var(getSigma(x, annualize, nDays)[whichToInclude])  
+    out = list('varDB' = varDB, 'varMu' = varMu, 'varSigma' = varSigma)
+  }
+  if(which %in% c('driftbursts', 'db')){
+    out = var(getDB(x)[whichToInclude])
+  }
+  if(which == 'mu'){
+    out = var(getMu(x, annualize, nDays)[whichToInclude])
+  }
+  if(which == 'sigma'){
+    out = var(getSigma(x, annualize, nDays)[whichToInclude])
+  }
+  
+  return(out)
+
+}

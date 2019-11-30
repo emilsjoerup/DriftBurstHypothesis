@@ -1,8 +1,6 @@
 \name{driftBursts}
 \alias{driftBursts}
-\alias{getMu}
-\alias{getSigma}
-\alias{getDB}
+
 \title{
 Drift Bursts
 }
@@ -10,23 +8,23 @@ Drift Bursts
 Calculates the Test-Statistic for the Drift Burst Hypothesis.
 }
 \usage{
-driftBursts(timestamps = NULL, logPrices, testTimes = seq(34200, 57600, 60),
+driftBursts(timestamps = NULL, logPrices, testTimes = seq(34260, 57600, 60),
                         preAverage = 5, ACLag = -1L, meanBandwidth = 300L, 
-                        varianceBandwidth = 900L, realTime = FALSE, parallelize = FALSE,
+                        varianceBandwidth = 900L, parallelize = FALSE,
                         nCores = NA, warnings = TRUE)
 }
 
 \arguments{
   \item{timestamps}{
 Either:
-A \code{numeric} of timestamps for the trades in seconds after midnight.
-Or: NULL, when the time argument is NULL, the logprices argument must be an \code{xts} object.
+A \code{numeric} of \code{timestamps} for the trades in seconds after midnight.
+Or: \code{NULL}, when the time argument is \code{NULL}, the \code{logprices} argument must be an \code{xts} object.
 }
   \item{logPrices}{
-A \code{numeric} or \code{xts} object containing the log-prices of the asset.
+A \code{numeric} or \code{xts} object containing the log-prices.
 }
   \item{testTimes}{
-A \code{numeric} containing the times at which to calculate the tests. The standard of \code{seq(34200, 57600, 60)} denotes calculating the test-statistic once per minute, i.e. 391 times for a typical 6.5 hour trading day from 9:30:00 to 16:00:00.
+A \code{numeric} containing the times at which to calculate the tests. The standard of \code{seq(34260, 57600, 60)} denotes calculating the test-statistic once per minute, i.e. 390 times for a typical 6.5 hour trading day from 9:31:00 to 16:00:00.
 See details.
 }
   \item{preAverage}{
@@ -34,7 +32,7 @@ An \code{integer} denoting the length of pre-averaging estimates of the log-pric
 
 }
   \item{ACLag}{
-An positive \code{integer} denoting how many lags are to be used for the HAC estimator of the variance - the standard of \code{-1} denotes using an automatic lag selection algorithm for each iteration..
+A positive \code{integer} greater than 1 denoting how many lags are to be used for the HAC estimator of the variance - the standard of \code{-1} denotes using an automatic lag selection algorithm for each iteration.
 }
   \item{meanBandwidth}{
 An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the mean.
@@ -42,9 +40,6 @@ An \code{integer} denoting the bandwidth for the left-sided exponential kernel f
   \item{varianceBandwidth}{
 An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the variance.
 }
-  \item{realTime}{
-A \code{logical} denoting whether to use a real-time implementation. See details.
-  }
   \item{parallelize}{
 A \code{Boolean} to determine whether to parallelize the underlying C++ code. (Using OpenMP)
 }
@@ -57,53 +52,29 @@ A \code{logical} denoting whether warnings should be shown.
 }
 }
 \details{
-
-If the testTimes vector contains instructions to test before the first trade (excluding the very first test), or more than 15 minutes after the last trade, these entries will be deleted, as not doing so may cause crashes.
-
-The test statistic is NOT calculated on the first entry of testTimes, please use this to denote the start of a trading day.
+If the \code{testTimes} vector contains instructions to test before the first trade, or more than 15 minutes after the last trade, these entries will be deleted, as not doing so may cause crashes.
 
 The test statistic is unstable before \code{max(meanBandwidth , varianceBandwidth)} seconds has passed.
 
-If timestamps is provided and logPrices is an \code{xts} object, the indices of logPrices will be used regardless.
+If \code{timestamps} is provided and \code{logPrices} is an \code{xts} object, the indices of logPrices will be used regardless.
 
-Note that using an \code{xts} argument is slower than using a \code{numeric} and the timestamps due to the creation of the timestamps from the index of the input.
-
-
-The lags from the Newey-West algorithm is increased by 2 * (preAveage-1) as due to the pre-averaging we know atleast this many lags should be corrected for due to the auto-correlation. The maximum of 20 lags is also increased by this same factor for the same reason.
+Note that using an \code{xts} logPrices argument is slower than using a \code{numeric} due to the creation of the timestamps from the index of the input. When using \code{xts} objects, be careful to use the correct time zones. For example, if I as a dane use the \code{"America/New_York"} time zone for my \code{xts} objects, I have to add 14400 to my testing times. Same correction will have to be made to the \code{startTime} and \code{endTime} arguments in the plotting methods.
 
 
-Using \code{realTime = TRUE} will emulate a situation where the information comes into the system at realtime and tests at the times determined by \code{testTimes}. This means pre-averaging the returns at all testing times which means the calculations are slower than the 'normal' test statistic.
-
-The methods \code{getMu(DBH)} and \code{getSigma(DBH)} have ad-hoc adjustments made to the output that are based on simulations. These adjustments give a slight down-ward bias in the value of the drift and sigma if the \code{preAverage} term is VERY high, i.e. 10 or 20 for a noise-less price series of e.g. 234000 trades. If you find any better adjustments (I cannot deny better adjustments are out there), please contact me.
+The lags from the Newey-West algorithm is increased by \code{2 * (preAveage-1)} due to the pre-averaging we know atleast this many lags should be corrected for. The maximum of 20 lags is also increased by this same factor for the same reason.
 
 
+The methods \code{getMu(DBH)} and \code{getSigma(DBH)} have ad-hoc adjustments made to the output that are based on simulations. These adjustments give a slight down-ward bias in the value of the drift and sigma if the \code{preAverage} argument is VERY high, i.e. 10 or 20 for a noise-less price series of e.g. 23400 trades. If you find any better adjustments, please contact me.
+
+To get the unadjusted series, use \code{DBH$mu} or \code{DBH$sigma} for the drift, and volatility respectively.
 }
+
 \value{
-An object of class \code{DBH} and \code{list} containing the series of the drift burst hypothesis test-statistic as well as the estimated spot drift and variance series. The list also contains some information such as the variance and mean bandwidths along with the pre-averaging setting and the amount of observations.
-
-The S3 class DBH has the following methods so far:
-\itemize{
-\item{\code{print}: Prints the DBH object's mean mu, sigma as well as the mean and the variance of the test statistic.
-Optional arguments \code{annualize} can be used to determine whether to annualize the mu and sigma. Default is \code{FALSE} for no annualization. Optional argument \code{nDays} can be used to determine how many days should be used for annualizing, default is \code{252} as there are typically 252 trading days in a year.}
-\item{\code{getDB}: Extracts the test-statistic.}
-\item{\code{getSigma}: Extracts the estimated local variance. Optional argument \code{annualize} can be used to determine whether to annualize (\code{TRUE}) or not (\code{FALSE}) (default).}
-\item{\code{getMu}: Extracts the estimated local drift.  Optional argument \code{annualize} can be used to determine whether to annualize (\code{TRUE}) or not (\code{FALSE}) (default).}
-\item{\code{plot}: Plotting routine.}
-The plotting routine accepts 8 arguments for customization in the ... argument, which must be passed with the following names:
-\itemize{
-  \item{\code{which}:Used for choosing which series to plot, valid choices are: \code{"DriftBursts"}, \code{"DB"}, \code{"Sigma"}, \code{"Mu"}, and     \code{c("Sigma","Mu")}, the order of the latter is irrelevant. The case of the input does not matter. Default = \code{"driftbursts"}}
-  \item{\code{price}:The price series which, if provided, will be overlayed in a red dotted line and the level will be shown at the right y-axis.       (Only   used if which is \code{"DriftBursts"}). Default = \code{NULL}}
-  \item{\code{time}:Timestamps for the trades in seconds after midnight, which will be used for the x-axis of the plot if the price is overlayed.       Default = \code{NULL}}
-  \item{\code{startTime}:Start of the trading day in seconds after midnight. Default = \code{34200}}
-  \item{\code{endTime}:End of the trading day in seconds after midnight. Default = \code{57600}}
-  \item{\code{leg.x}:X-position of the legend in the case \code{which} is \code{"DriftBursts"} AND the price is overlayed. Default = \code{"topleft"}.   Usage is as in the base \code{R} engine.}
-  \item{\code{leg.y}:Y-position of the legend in the case \code{which} is \code{"DriftBursts"} AND the price is overlayed. Default = \code{"NULL"}.     Usage is as in the base \code{R} engine.}
-  \item{\code{tz}: \code{character} denoting the time-zone. Default = \code{"GMT"}}
-  \item{\code{annualize}: \code{logical} denoting whether to annualize in case which contains "mu", "sigma", or both. Default = FALSE}
-  \item{\code{nDays}: \code{numeric} denoting how many to use for annualization if \code{annualize} is TRUE. Default = 252}
-  }
+An object of class \code{DBH} and \code{list} containing the series of the drift burst hypothesis test-statistic as well as the estimated spot drift and variance series. The list also contains some information such as the variance and mean bandwidths along with the pre-averaging setting and the amount of observations. Additionally, the list will contain information on whether testing happened for all \code{testTimes} entries.
 }
-Note that calculating e.g. the mean of the output of \code{getMu(DBH)} should be done with \code{mean(getMu(DBH)[-1])}. This is because no testing is actually done at the first \code{testTimes} entry and as stated above, this should be used to denote the start of a trading day.
+
+\section{warning}{
+When using \code{getMu(DBH)}, beware that the series may be padded with zeros (a warning will be shown when running the \code{driftBursts} in this case). This will for example happen when using \code{testTimes} for an entire trading day but the data is from a half trading day. Therefore, methods for calculating the mean and variance of the series that take this into account are provided and documented \link[=getMu]{here}.
 }
 \references{
 Christensen, Oomen and Reno (2018) <DOI:10.2139/ssrn.2842535>.
@@ -112,9 +83,12 @@ Christensen, Oomen and Reno (2018) <DOI:10.2139/ssrn.2842535>.
 Emil Sjoerup
 }
 
+\seealso{
+The DBH methods for the DBH class are documented \link[=getMu]{here}.
+}
+
 \examples{
-#Simulate from a stochastic volatility model.
-#Both a flash crash and flash rally are coded into the function.
+#Simulate a price series containing both a flash crash and a flash-rally
 flashCrashSim = function(iT, dSigma, dPhi, dMu){
   vSim = numeric(iT)
   vEps = rnorm(iT , sd =dSigma)
@@ -157,7 +131,7 @@ y[50000] = 500
 
 #Here, the observations are equidistant, but the code can handle unevenly spaced observations.
 timestamps = seq(34200 , 57600 , length.out = iT)
-testTimes = seq(34200, 57600, 60)
+testTimes = seq(34260, 57600, 60)
 logPrices = log(y)
 
 library("DriftBurstHypothesis")
@@ -205,7 +179,7 @@ y[50000] = 500
 #Here, the observations are equidistant, but the code can handle unevenly spaced observations.
 timestamps = seq(34200 , 57600 , length.out = iT)
 startTime = strptime("1970-01-01 00:00:00.0000", "\%Y-\%m-\%d \%H:\%M:\%OS", tz = "GMT")
-testTimes = seq(34200, 57600, 60)
+testTimes = seq(34260, 57600, 60)
 
 
 price = xts(vY, startTime + timestamps)
