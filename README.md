@@ -42,7 +42,7 @@ library(DriftBurstHypothesis)
 data("sample_tdata")
 price = xts(as.numeric(sample_tdata$PRICE), index(sample_tdata))
 plot(price)
-testtimes = seq(34200, 57600, 60)
+testtimes = seq(34260, 57600, 60)
 
 
 
@@ -63,7 +63,7 @@ set.seed(1234)
 returns = rnorm(23399, sd = 1)/sqrt(23400)
 price = c(0,cumsum(returns))
 timestamps = seq(34200, 57600, length.out = 23400)
-testTimes = c(34200,seq(34200 + 5*300, 57600, 60))
+testTimes = seq(34200 + 5*300, 57600, 60)
 DBH = driftBursts(timestamps, price, testTimes, preAverage = 5, meanBandwidth = 300, varianceBandwidth = 5*300)
 plot(DBH, price = price, timestamps = timestamps)
 ```
