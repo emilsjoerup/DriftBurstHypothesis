@@ -1,35 +1,37 @@
 #include <RcppArmadillo.h>
 #include "utils.h"
-#if defined(_OPENMP)
+#ifdef _OPENMP
 #include <omp.h>
 // [[Rcpp::plugins(openmp)]]
 #endif
+
 using namespace arma;
 using namespace Rcpp;
 const int iMaxLag = 20;
 const double dC = 2.6614;
 
 
+
 // [[Rcpp::export]]
-arma::vec HACWeightC(int iLag){ 
+arma::colvec HACWeightC(int iLag){ 
   // Input will always be non-zero and positive, thus, we can ignore the 0 case and save some time
-  vec vW = linspace(1, iLag,iLag) / iLag;
+  arma::colvec vW = linspace(1, iLag,iLag) / iLag;
   int iIdx = floor(iLag/2.0);
   vW(span(0,iIdx-1)) = 1.0 - 6.0 * square(vW(span(0,iIdx-1))) + 6.0 * pow(vW(span(0,iIdx-1)), 3.0);
   vW(span(iIdx, iLag-1)) = 2.0 * pow(1 - vW(span(iIdx, iLag-1)), 3.0);
-  return(vW);
+  return vW;
 }
 
 
 
 //[[Rcpp::export]]
 
-double AsymptoticVarianceC(arma::vec vIn, int iLag){  
+double AsymptoticVarianceC(const arma::colvec& vIn, int iLag){  
   int iT = vIn.size();
-  arma::vec vW;
   if(iT<=iLag){ //We cannot calculate the variance in this case as there are not enough observations.
     return(datum::nan);
   }else{
+    arma::colvec vW;
     vec vAc = zeros(iLag);
     if(iLag == 0 || iLag == 1){
       return(sum(vIn % vIn)); //Special cases where the weight will be 0.
@@ -44,23 +46,21 @@ double AsymptoticVarianceC(arma::vec vIn, int iLag){
   }
 }
 
-
-
 // [[Rcpp::export]]
-
-double AutomaticLagSelectionC(arma::vec vX, double dMu){
+int AutomaticLagSelectionC(const arma::colvec& vX, double dMu){
   int iN = round(4.0 * pow((dMu/100), 0.16));
   int iT = vX.size();
   if(iT<=iN+1){
     return(iMaxLag);
   }
   
-  vec vE = zeros(iN+1);
-  vec vAc = zeros(iN);
+  arma::colvec vE = zeros(iN+1);
+  arma::colvec vAc = zeros(iN);
   
   for(int i=0; i<=iN; i++){
     vE[i] = mean(vX(span((i+1), iT-1)) % vX(span(0, (iT-i-2))));
   }
+  
   double d0 = - sum(linspace(1, (iN+1), (iN+1)) % vE);
   
   for(int i=1; i<=iN; i++){
@@ -82,47 +82,48 @@ double AutomaticLagSelectionC(arma::vec vX, double dMu){
 
 
 //[[Rcpp::export]]
-
-Rcpp::List DriftBurstLoopC(arma::vec vPreAveraged, arma::vec diffedlogprices, arma::vec vTime, arma::vec vTesttime, 
+Rcpp::List DriftBurstLoopC(const arma::colvec& vPreAveraged, const arma::colvec& diffedlogprices, 
+                           const arma::colvec& vTime, const arma::colvec& vTesttime, 
                            double iMeanBandwidth, double iVarBandwidth, int iPreAverage, int iAcLag){
+  
+  // Initialization
   int iT = vTesttime.size();
   int iQ;
   int iIdx;
-  double iAutoAcLag;
-  arma::vec vMu = zeros<vec>(iT);
-  arma::vec vSigma = zeros<vec>(iT);
-  arma::vec vX = zeros<vec>(vTime.size());
-  arma::vec vWm;
-  arma::vec vWvar;
-  arma::vec vFoo(2);
-  vFoo[1] = iMaxLag;
+  int iAutoAcLag;
+  arma::colvec vMu = zeros<vec>(iT);
+  arma::colvec vSigma = zeros<vec>(iT);
+  arma::colvec vX = zeros<vec>(vTime.size());
+  arma::colvec vWm;
+  arma::colvec vWvar;
   
   for(int i = 0; i<iT; i++){
     vX = vTime - vTesttime[i];
     iIdx = sum((vX<=0))-2;
-    
-    vWm = exp(vX(span(0,iIdx)) / iMeanBandwidth);  // exponential kernel
-    
-    vMu[i] = sum(vWm(span(0,iIdx)) % vPreAveraged(span(0,iIdx))); 
-    
-    vWvar = exp(vX(span(0,iIdx)) / iVarBandwidth);  // exponential kernel
+    // Construct the weights for the mu estimator using a left-sided exponential kernel
+    //  and construct the mu estimate
+    vWm = exp(vX(span(0,iIdx)) / iMeanBandwidth); 
+    vMu[i] = sum(vWm % vPreAveraged(span(0,iIdx))); 
+    // Construct the weights for the sigma estimator using a left-sided exponential kernel
+    vWvar = exp(vX(span(0,iIdx)) / iVarBandwidth);
     
     if(iAcLag == -1){
+      // Perform automatic lag selection if mandated.
       iQ = AutomaticLagSelectionC(diffedlogprices(span(0,iIdx)), sum(vWm));
-      vFoo[0] = iQ;
-      iAutoAcLag = min(vFoo) + 2.0 * (iPreAverage-1);
-      vSigma[i] = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))), iAutoAcLag); 
-      
+      iAutoAcLag = std::min(iMaxLag, iQ) + 2 * (iPreAverage-1);
+      // Estimate the asymptotic variance
+      vSigma[i] = AsymptoticVarianceC((vWvar % vPreAveraged(span(0,iIdx))), iAutoAcLag); 
       
     }else{
+      // Estimate the asymptotic variance, not using automatic lag selection.
       vSigma[i] = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))), iAcLag);
   
     }
     
     
   }
-  
-  arma::vec vDB = sqrt(iMeanBandwidth) * (vMu / iMeanBandwidth) / sqrt(vSigma/ iVarBandwidth) ; 
+  // Calculate the test statistic and create a nice named list containing the estimates, which we will return.
+  arma::colvec vDB = sqrt(iMeanBandwidth) * (vMu / iMeanBandwidth) / sqrt(vSigma/ iVarBandwidth) ; 
   Rcpp::List lOut = Rcpp::List::create(Rcpp::Named("driftBursts") = vDB,
                                         Rcpp::Named("sigma") = vSigma / iVarBandwidth,
                                         Rcpp::Named("mu") = vMu / iMeanBandwidth);
@@ -133,27 +134,24 @@ Rcpp::List DriftBurstLoopC(arma::vec vPreAveraged, arma::vec diffedlogprices, ar
 
 
 //[[Rcpp::export]]
-
-Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices, arma::vec vTime, 
-                              arma::vec vTesttime, double iMeanBandwidth, double iVarBandwidth, 
-                              int iPreAverage, int iAcLag , int iCores){
-#if defined(_OPENMP)
+Rcpp::List DriftBurstLoopCPAR(const arma::colvec& vPreAveraged, const arma::colvec& diffedlogprices, 
+                              const arma::colvec& vTime, const arma::colvec& vTesttime, 
+                              double iMeanBandwidth, double iVarBandwidth, int iPreAverage, int iAcLag, int iCores){
+#ifdef _OPENMP
   omp_set_num_threads(iCores);
   int iT = vTesttime.size();
   int iIdx, iAutoAcLag;
-  double iQ;
-  arma::vec vMu= zeros<vec>(iT);
-  arma::vec vSigma= zeros<vec>(iT);
-  arma::vec vX = zeros<vec>(vTime.size());
-  arma::vec vWvar = zeros<vec>(vTime.size());
-  arma::vec vWm =  zeros<vec>(vTime.size());
-  arma::vec vFoo = {0, iMaxLag};
+  int iQ;
+  arma::colvec vMu= zeros<vec>(iT);
+  arma::colvec vSigma= zeros<vec>(iT);
+  arma::colvec vX = zeros<vec>(vTime.size());
+  arma::colvec vWm;
+  arma::colvec vWvar;
   //Parallelization setup
-  #pragma omp parallel for default(none)\
+#pragma omp parallel for                                   \
   shared(vPreAveraged, diffedlogprices, vTime, vTesttime, iMeanBandwidth,\
-         iVarBandwidth, iPreAverage, iAcLag, vMu, vSigma, iT)\
-    private(vX, vWm, vWvar, iIdx, iQ, iAutoAcLag, vFoo)
-    
+         iVarBandwidth, iPreAverage, iAcLag, vMu, vSigma, iT)            \
+    private(vX, vWm, vWvar, iIdx, iQ, iAutoAcLag)
     for(int i = 0 ; i<iT; i++){
       
       vX = vTime - vTesttime[i];
@@ -162,6 +160,7 @@ Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices,
       
       vWm = exp(vX(span(0, iIdx)) / iMeanBandwidth);  // exponential kernel
       
+      
       vMu[i] = sum(vWm(span(0,iIdx)) % vPreAveraged(span(0, iIdx)));
       
       vWvar = exp(vX(span(0,iIdx)) / iVarBandwidth);  // exponential kernel
@@ -169,30 +168,26 @@ Rcpp::List DriftBurstLoopCPAR(arma::vec vPreAveraged, arma::vec diffedlogprices,
       if(iAcLag == -1){
         
         iQ = AutomaticLagSelectionC(diffedlogprices(span(0,iIdx)), sum(vWm));
-        
-        arma::vec vFoo = {iQ, iMaxLag};
-        iAutoAcLag = min(vFoo) + 2.0 * (iPreAverage-1);
+        iAutoAcLag = std::min(iMaxLag, iQ) + 2 * (iPreAverage-1);
         vSigma[i]= AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))), iAutoAcLag); 
       }else{
         vSigma[i] = AsymptoticVarianceC((vWvar(span(0,iIdx)) % vPreAveraged(span(0,iIdx))), iAcLag);
       }
       
-      
-      
     }
     
-  arma::vec vDB = sqrt(iMeanBandwidth) * (vMu/ iMeanBandwidth) / sqrt(vSigma/ iVarBandwidth) ; 
+    arma::colvec vDB = sqrt(iMeanBandwidth) * (vMu/ iMeanBandwidth) / sqrt(vSigma/ iVarBandwidth) ; 
   Rcpp::List lOut =  Rcpp::List::create(Rcpp::Named("driftBursts") = vDB,
                                         Rcpp::Named("sigma") = vSigma / iVarBandwidth,
                                         Rcpp::Named("mu") = vMu / iMeanBandwidth);
 #else
   // If openMP is not available, we use single core execution.
   Rf_warning("OpenMP is not available. Sequential processing is used.");
-  Rcpp::List lOut = DriftBurstLoopC(vPreAveraged, diffedlogprices, vTime , vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag )
+  Rcpp::List lOut = DriftBurstLoopC(vPreAveraged, diffedlogprices, vTime ,\
+                                    vTesttime, iMeanBandwidth, iVarBandwidth, iPreAverage, iAcLag);
 #endif
-    
-    return(lOut);
+  
+  return(lOut);
   
   
 }
-

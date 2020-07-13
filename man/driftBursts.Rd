@@ -9,9 +9,10 @@ Calculates the Test-Statistic for the Drift Burst Hypothesis.
 }
 \usage{
 driftBursts(timestamps = NULL, logPrices, testTimes = seq(34260, 57600, 60),
-                        preAverage = 5, ACLag = -1L, meanBandwidth = 300L, 
-                        varianceBandwidth = 900L, parallelize = FALSE,
-                        nCores = NA, warnings = TRUE)
+                        preAverage = 5, ACLag = -1L, 
+                        meanBandwidth = 300L, varianceBandwidth = 900L, 
+                        sessionStart = 34200, sessionEnd = 57600,
+                        parallelize = FALSE, nCores = NA, warnings = TRUE)
 }
 
 \arguments{
@@ -20,27 +21,33 @@ Either:
 A \code{numeric} of \code{timestamps} for the trades in seconds after midnight.
 Or: \code{NULL}, when the time argument is \code{NULL}, the \code{logprices} argument must be an \code{xts} object.
 }
-  \item{logPrices}{
-A \code{numeric} or \code{xts} object containing the log-prices.
+\item{logPrices}{
+  A \code{numeric} or \code{xts} object containing the log-prices.
 }
-  \item{testTimes}{
-A \code{numeric} containing the times at which to calculate the tests. The standard of \code{seq(34260, 57600, 60)} denotes calculating the test-statistic once per minute, i.e. 390 times for a typical 6.5 hour trading day from 9:31:00 to 16:00:00.
-See details.
+\item{testTimes}{
+  A \code{numeric} containing the times at which to calculate the tests. The standard of \code{seq(34260, 57600, 60)} denotes calculating the test      -statistic once per minute, i.e. 390 times for a typical 6.5 hour trading day from 9:31:00 to 16:00:00.
+  See details.
 }
-  \item{preAverage}{
-An \code{integer} denoting the length of pre-averaging estimates of the log-prices.
+\item{preAverage}{
+  An \code{integer} denoting the length of pre-averaging estimates of the log-prices.
 
 }
-  \item{ACLag}{
-A positive \code{integer} greater than 1 denoting how many lags are to be used for the HAC estimator of the variance - the standard of \code{-1} denotes using an automatic lag selection algorithm for each iteration.
+\item{ACLag}{
+  A positive \code{integer} greater than 1 denoting how many lags are to be used for the HAC estimator of the variance - the standard of \code{-1} denotes using an automatic lag selection algorithm for each iteration.
 }
-  \item{meanBandwidth}{
-An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the mean.
+\item{meanBandwidth}{
+  An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the mean.
 }
-  \item{varianceBandwidth}{
-An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the variance.
+\item{varianceBandwidth}{
+  An \code{integer} denoting the bandwidth for the left-sided exponential kernel for the variance.
 }
-  \item{parallelize}{
+\item{sessionStart}{
+  A \code{double} to denote the start of the trading session in seconds after midnight.
+}
+\item{sessionEnd}{
+  A \code{double} to denote the end of the trading session in seconds after midnight.
+}
+\item{parallelize}{
 A \code{Boolean} to determine whether to parallelize the underlying C++ code. (Using OpenMP)
 }
 \item{nCores}{

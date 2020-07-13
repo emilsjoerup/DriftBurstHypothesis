@@ -11,6 +11,8 @@
 \alias{getDB}
 \alias{getMean}
 \alias{getVar}
+\alias{getCriticalValues}
+\alias{getCriticalValues.DBH}
 \title{
   Methods for the DBH class
 }
@@ -22,6 +24,7 @@ These are the methods for the class DBH which are currently implemented.
 \method{print}{DBH}(x, ...)
 \method{plot}{DBH}(x, ...)
 \method{getDB}{DBH}(x)
+\method{getCriticalValues}{DBH}(x, alpha)
 \method{getMu}{DBH}(x, annualize = FALSE, nDays = 252)
 \method{getSigma}{DBH}(x, annualize = FALSE, nDays = 252)
 \method{getMean}{DBH}(x, which = 'all')
@@ -33,6 +36,7 @@ These are the methods for the class DBH which are currently implemented.
 \arguments{
 \item{x}{DBH object}
 \item{...}{Additional arguments for the plotting and printing routines. See details}
+\item{alpha}{\code{double} confidence level for the critical values to be extracted. Default = 0.95 designating 95\%}
 \item{annualize}{\code{logical} determining whether or not to annualize the series.}
 \item{nDays}{\code{numeric} determining how many days to use for annualization. The standard of 252 reflects the average 252 trading days in a year.}
 \item{which}{\code{character} determining which series to retrieve the mean and variance of in \code{getMean} and \code{getVar}. This argument can also be used in the \code{print} and \code{plot} methods, see details for use in these methods.}
@@ -42,8 +46,8 @@ These are the methods for the class DBH which are currently implemented.
 \details{
 For the \code{print} method, the \code{...} argument can be used to pass the following arguments:
 \itemize{
-\item{\code{criticalValue}: \code{numeric} determining the critical value to use when determining whether a drift burst is present in the data. If this critical value is omitted, a method to determine the critical value based on a interpolations of simulated data-set of critical values for different confidence levels and auto-correlations of the test statistic.}
-\item{\code{alpha}: \code{numeric} of length 1 which determines the significance level of the testing.}
+\item{\code{criticalValue}: \code{numeric} determining the critical value to use when determining whether a drift burst is present in the data. If this critical value is omitted, a method to determine the critical value based on a interpolations of simulated data-set of critical values for different confidence levels and auto-correlations of the test statistic. See appendix B in the article.}
+\item{\code{alpha}: \code{numeric} of length 1 which determines the confidence level of critical values extracted using the method above.}
 }
 For the \code{plot} method, the \code{...} argument can be used to pass the following arguments:
 \itemize{
@@ -62,7 +66,9 @@ For the \code{plot} method, the \code{...} argument can be used to pass the foll
 \value{
 For \code{print} and \code{plot}, nothing is returned.
 
-For getDB, getMu, and getSigma, vectors with the same length as testTimes, containing the test statistic, drift, or volatility respecitvely, is returned
+For \code{getCriticalValues}, the critical value, and the normalized critical value is returned in a \code{list}.
+
+For  \code{getDB}, \code{getMu}, and \code{getSigma}, vectors with the same length as testTimes, containing the test statistic, drift, or volatility respecitvely, is returned
 
 For the methods \code{getMean} and \code{getVar}:
 
@@ -98,6 +104,8 @@ DBH = driftBursts(timestamps, p, testTimes, preAverage = 1, ACLag = -1,
                   meanBandwidth = meanBandwidth, varianceBandwidth = varianceBandwidth)
 
 
+
+
 print(DBH)
 # Plots the test statistic with prices overlaid.
 plot(DBH, timestamps = timestamps, price = p)
@@ -107,6 +115,9 @@ plot(DBH, which = 'sigma', annualize = TRUE)
 
 # Plots the annualized drift and volatility
 plot(DBH, which = c('sigma', 'mu'), annualize = TRUE)
+
+# Retrieve the critical values of the drift burst test statistic
+getCriticalValues(DBH)
 
 # Calculate the mean of the test statistic, drift, and volatility
 getMean(DBH, which = 'all')
