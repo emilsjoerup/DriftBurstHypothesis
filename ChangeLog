@@ -61,3 +61,9 @@
   *Port over the routine for testing whether a flash crash is present from Matlab. 
 2019-11-28 Emil Sjoerup <emilsjoerup@live.dk>
   *remove realTime feature, which was a bug mistaken as a feature :)
+2020-01-01 Emil Sjoerup <emilsjoeerup@live.dk>
+  *Small performance gains for sequential evaluation
+2020-07-13 Emil Sjoerup <emilsjoerup@live.dk>
+  * DESCRIPTION (Version): New version is 0.4.0.1
+  * Implement safeguard against testing too soon which caused crashes when
+    many trades at the start of the series have the same timestamp and testing is mandated at the very start of trading.
