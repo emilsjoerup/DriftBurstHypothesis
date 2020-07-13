@@ -28,8 +28,8 @@ fit2d3rdDegree = function(A, X, Y){
 
 
 
-isDriftBurst = function(tStat, alpha){
-  ##load arr:
+DBHCriticalValues = function(x, alpha){
+  tStat = getDB(x)
   alpha_used = alpha
   
   nObs = length(tStat)

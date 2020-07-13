@@ -3,15 +3,14 @@ plot.DBH = function(x, ...){
   #### Get extra passed options and data
   options = list(...)
   #### List of standard options
-  opt = list(which = "driftbursts", price = NULL, timestamps = NULL, startTime = 34200, endTime = 57600,
+  opt = list(which = "driftbursts", price = NULL, timestamps = NULL, 
+             startTime = ifelse(is.null(x$info[['sessionStart']]), min(x$info[['testTimes']]), x$info[['sessionStart']]), 
+             endTime = ifelse(is.null(x$info[['sessionEnd']]), max(x$info[['testTimes']]), x$info[['sessionEnd']]),
              leg.x = "topleft", leg.y = NULL,  tz = "GMT", annualize = FALSE, nDays = 252, legend.txt = "")
   #### Override standard options where user passed new options
   opt[names(options)] = options
-  # for (i in 1:length(opt)) {
-  #   assign(names(opt)[i], opt[[i]])
-  # }
 
-  #### Extract options (better way to do it?)  #I will test above method when I get time.
+  #### Extract options (better way to do it?) 
   which      = tolower(opt$which)
   startTime  = opt$startTime
   endTime    = opt$endTime
@@ -36,8 +35,6 @@ plot.DBH = function(x, ...){
          CasE doesn't matter.")
   }
   if(inherits(tstat, "xts")){
-    testTimes = index(tstat)
-    testTimes = as.numeric(testTimes) - (.indexDate(tstat)[1] * 86400)
     tstat     = as.numeric(tstat)
     sigma     = as.numeric(sigma)
     mu        = as.numeric(mu)
@@ -55,8 +52,8 @@ plot.DBH = function(x, ...){
     tstat=tstat[-1]
   }
   if(min(testTimes) < startTime | max(testTimes) > endTime){
-    cat('\nTesting was tried before startTime or after endTime, thus some of the tests may be cut off from the plot.
-        \nIf the plot looks weird, consider changing startTime and endTime. 
+    cat('\nTesting was tried before sessionStart or after sessionEnd, thus some of the tests may be cut off from the plot.
+        \nIf the plot looks weird, consider changing sessionStart and sessionEnd. 
         \nThese should reflect the start of trading and the end of trading respectively')
   }
   xtext = as.POSIXct(testTimes, origin = "1970-01-01", tz = tz)
@@ -136,7 +133,7 @@ print.DBH = function(x, ...){
   opt[names(options)] = options
   if(usePolynomialInterpolation){
     alpha = opt$alpha
-    criticalValue = isDriftBurst(getDB(x), alpha)$quantile  
+    criticalValue = getCriticalValues(x, alpha)$quantile  
   }else{
     criticalValue = opt$criticalValue
   }
@@ -177,7 +174,8 @@ getSigma = function(x, annualize = FALSE, nDays = 252){
 }
 
 getSigma.DBH = function(x, annualize = FALSE, nDays = 252){
-  sigma = sqrt((x$sigma * 2 * x$info$nObs)  / (x$info$nObs / 23400))/(x$info$preAverage^2)
+  sigma = sqrt((x$sigma * 2 * x$info$nObs)  / (x$info$nObs / (x$info$sessionEnd - x$info$sessionStart)))/
+    (x$info$preAverage^2)
   if(annualize){sigma = sigma * sqrt(nDays)}
   return(sigma)
 }
@@ -188,7 +186,8 @@ getMu = function(x, annualize = FALSE, nDays = 252){
 }
 
 getMu.DBH = function(x, annualize = FALSE, nDays = 252){
-  mu = (x$mu * x$info$meanBandwidth / (x$info$nObs / 23400)) / (x$info$preAverage^2 * 2)
+  mu = (x$mu * x$info$meanBandwidth / (x$info$nObs / (x$info$sessionEnd - x$info$sessionStart)))/
+    (x$info$preAverage^2 * 2)
   if(annualize){mu =  mu * nDays}
   return(mu)
 }
@@ -209,19 +208,19 @@ getMean.DBH = function(x, which = 'all'){
   whichToInclude = seq(padding[1] + 1, length(x$info$testTimes)- padding[2]) 
   
   if(which == 'all'){
-    meanDB = mean(getDB(x)[whichToInclude])
-    meanMu = mean(getMu(x)[whichToInclude])
-    meanSigma = mean(getSigma(x)[whichToInclude])  
+    meanDB = mean(getDB(x)[whichToInclude], na.rm = TRUE)
+    meanMu = mean(getMu(x)[whichToInclude], na.rm = TRUE)
+    meanSigma = mean(getSigma(x)[whichToInclude], na.rm = TRUE)  
     out = list('meanDB' = meanDB, 'meanMu' = meanMu, 'meanSigma' = meanSigma)
   }
   if(which %in% c('driftbursts', 'db')){
-    out = mean(getDB(x)[whichToInclude])
+    out = mean(getDB(x)[whichToInclude], na.rm = TRUE)
   }
   if(which == 'mu'){
-    out = mean(getMu(x)[whichToInclude])
+    out = mean(getMu(x)[whichToInclude], na.rm = TRUE)
   }
   if(which == 'sigma'){
-    out = mean(getSigma(x)[whichToInclude])
+    out = mean(getSigma(x)[whichToInclude], na.rm = TRUE)
   }
   
   return(out)
@@ -262,4 +261,14 @@ getVar.DBH = function(x, which = 'all', annualize = FALSE, nDays = 252){
   
   return(out)
 
+}
+
+
+
+getCriticalValues = function(x, alpha = 0.95){
+  UseMethod('getCriticalValues', x)
+}
+
+getCriticalValues.DBH = function(x, alpha = 0.95){
+  return(DBHCriticalValues(x, alpha))
 }
