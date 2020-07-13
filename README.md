@@ -36,7 +36,7 @@ is a smooth kernel defined on the positive real numbers, ![equation](https://lat
 
 ## Examples using simulated high frequency data:
 ```
-library(highfrequency)
+library(highfrequency) # to get sample data
 library(xts)
 library(DriftBurstHypothesis)
 data("sample_tdata")
