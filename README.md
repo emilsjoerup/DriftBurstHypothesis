@@ -69,3 +69,4 @@ plot(DBH, price = price, timestamps = timestamps)
 ```
 
 ![Example plot](https://i.imgur.com/m1v3ACN.png)
+adding a line
